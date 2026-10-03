@@ -1,0 +1,13 @@
+{
+  "name": "better-life",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "人生工具箱：学校没教，生活会考。",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm run build && npm test && node library/tools/check-plain.mjs && node library/tools/check-refs.mjs --check"
+  }
+}

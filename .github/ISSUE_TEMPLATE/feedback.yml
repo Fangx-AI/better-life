@@ -1,0 +1,19 @@
+name: 使用反馈 / 想要的功能
+description: 哪里不好用？下一步最想要什么？
+title: "[反馈] "
+body:
+  - type: textarea
+    id: situation
+    attributes:
+      label: 你遇到了什么？
+      description: 写问题、关键词或功能需求就行，不必写技术术语。不要贴个人敏感信息。
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: 对应页面或条目链接（可选）
+  - type: textarea
+    id: expected
+    attributes:
+      label: 你希望它变成什么样？

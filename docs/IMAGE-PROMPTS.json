@@ -1,0 +1,5 @@
+{
+  "tool": "built-in image_gen",
+  "asset": "assets/cover.png",
+  "prompt": "Use case: ads-marketing. Asset type: wide GitHub README brand cover for Better Life 人生工具箱. Create a refined editorial brand banner, landscape 2:1 aspect ratio. Charcoal green background #171a17, pale chartreuse #d4ee83, warm ivory paper textures, no gradients. Left half has exceptionally legible bold simplified Chinese typography. Text exactly: small top label \"BETTER LIFE / 人生工具箱\"; main large title on two lines \"学校没教，\" and \"生活会考。\"; subtitle \"遇到事，先查一查。\". Right half shows a beautiful modest set of practical life guide index cards and a slim handbook, keys, clipboard, bank card-like blank card without numbers, tiny plant. Sophisticated flat editorial collage with subtle realistic paper shadow, generous negative space, friendly but not childish, reassuring practical utility rather than luxury. No fabricated statistics, no logos from other brands, no UI mockup, no watermarks, no extra text. Chinese glyphs must be correct, all text inside safe margins. This is an actual brand illustration, not a screenshot of functional software."
+}

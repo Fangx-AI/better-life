@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fangx-ai.github.io/better-life/sitemap.xml
