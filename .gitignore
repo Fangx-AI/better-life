@@ -6,3 +6,14 @@ output/
 .env.*
 !.env.example
 *.log
+public/content.json
+public/media/*.png
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+*.key
+*.blbk
+# 私人数据默认位于已忽略的 output/private/，上面后缀是额外兜底。

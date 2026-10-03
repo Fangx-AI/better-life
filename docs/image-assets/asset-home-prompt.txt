@@ -1,0 +1,8 @@
+Mode: built-in image_gen
+Use case: photorealistic-natural
+Asset type: 415x208 landscape website scene card background, standalone photograph at least 1245x624 pixels, approximately 2:1 aspect ratio.
+Input image: reference webpage design, use only its lower-right rental-and-housing card as subject, composition, lighting and photographic mood reference. Do not recreate the webpage.
+Primary request: bright warm wood tabletop with a real set of front-door keys and a small house-shaped keychain lying on the right side of the table, sharply focused and believable. Background is a softly blurred bright modern apartment with a green houseplant and white sheer window curtains.
+Style: high-quality lifestyle magazine editorial photography, natural real materials, tasteful warm daylight, realistic metal keys and wood grain.
+Composition: wide horizontal photograph, keys and house keychain in lower-right quadrant, softly blurred apartment upper half; bottom-left should be darker warm shaded wood and uncluttered negative space, suitable for editable white UI title overlay later. Retain bright inviting apartment atmosphere, do not make the whole photograph dark.
+Constraints: no text anywhere, no lettering on keychain, no icons, no labels, no people, no logos, no watermark, no interface, no borders, no typography, no whole webpage. Output one independent full-bleed photograph.

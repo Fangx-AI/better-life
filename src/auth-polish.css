@@ -1,0 +1,25 @@
+/* Existing Aceternity Input/NavbarButton, adapted to the selected warm brand. */
+.member-login-tabs{display:flex;gap:4px;border-radius:12px;padding:4px;background:#f8f5f2;margin-bottom:20px}
+.member-login-tabs .button{display:flex;align-items:center;justify-content:center;gap:6px;flex:1;min-height:44px;padding:9px 8px;color:#93918c;font-size:13px;border-radius:9px;box-shadow:none;white-space:nowrap}
+.member-login-tabs .button[aria-selected=true]{background:#fff;color:#d75941;box-shadow:0 2px 8px #5932150a}
+.member-login-tabs .button:focus-visible,.member-bind-button:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.member-auth-form .member-phone-field{display:flex;align-items:center;gap:0;background:#fbfaf9!important;border:1px solid #e7e2dd;border-radius:10px;overflow:hidden}
+.member-phone-prefix{padding:0 13px;border-right:1px solid #e7e2dd;font-size:14px;color:#727780;flex-shrink:0}
+.member-phone-field>div{flex:1;min-width:0;padding:0;background:transparent!important}
+.member-phone-field input{width:100%;border:0;background:transparent}
+.member-phone-field:focus-within{outline:2px solid var(--coral);outline-offset:0}
+.member-phone-field input:focus-visible{outline:0;box-shadow:none;--tw-ring-shadow:0 0 #0000}
+.member-identity-field{min-width:0}.member-identity-field>div{padding:0;background:transparent!important}
+.member-auth-form .button:disabled{cursor:not-allowed;opacity:.55;transform:none}
+.member-local-demo{margin-top:20px;margin-bottom:0;border-bottom:0;border-top:1px solid #ede7e0;padding-top:17px;padding-bottom:0}
+.member-identities{border-top:1px solid #ece7e3;padding-top:23px;margin-top:25px}
+.member-identities h3{font-size:15px;font-weight:650;margin:0 0 15px}
+.member-identities ul{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.member-identities li{display:flex;align-items:center;gap:9px;font-size:13px;color:#6e7b87;min-width:0}
+.member-identities li>span{overflow-wrap:anywhere;min-width:0}.member-identities li>svg{flex-shrink:0;color:#bf7960}
+.member-identities li>small{margin-left:auto;color:#9eaa97;white-space:nowrap;font-size:11px}
+.member-bind-button{display:flex;align-items:center;gap:6px;white-space:normal;text-align:left;color:#c1654d;font-size:12px;padding:10px 0;min-height:44px;margin-top:7px;line-height:1.7}
+.member-binding{margin-top:15px;padding:16px;background:#fdfaf7;border:1px solid #efe4db;border-radius:14px}
+.member-binding-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}.member-binding-heading b{font-size:14px}.member-binding-heading .button{padding:6px;min-width:36px;min-height:36px;display:grid;place-items:center;color:#8c908f}
+.member-binding>p{font-size:12px;line-height:1.8;color:#9b9189;margin:4px 0 17px}
+@media(max-width:380px){.member-dialog-scroll{padding:22px 18px}.member-login-tabs .button{font-size:12px;gap:4px}.member-phone-prefix{padding-inline:10px}}

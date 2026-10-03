@@ -49,7 +49,7 @@
 
 不是把整本书丢给你。先选自己的处境，再找具体条目。
 
-![真实检索界面：关键词、章节、证据等级和收藏](assets/search-desktop.png)
+![真实检索界面：关键词、生活主题、不花钱和收藏](assets/search-desktop.png)
 
 每条保留白话说明、成本、收益、来源和适用条件。想深入看，可以回到完整原文。
 
@@ -70,20 +70,27 @@
 | 没有网络也想检索 | [离线单文件 HTML](https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html) |
 | 平时已经在用 Claude Code / Codex | [原项目 AI Skill 的安装说明](library/skills/life-decision-guide/README.md) |
 | 直接读完整文字，或者自己整理 | [34 个章节的 Markdown 正文](library/book/) |
+| 在 Obsidian 中用双链与节点图阅读 | [下载 Vault ZIP](public/downloads/better-life-obsidian.zip) · [打开方法](docs/OBSIDIAN.md) |
 
 PDF、EPUB、离线 HTML 的下载来自原作者的发布页，可能比本项目的内容快照更新。
 
 ## 接下来，还会更顺手
 
 - [x] 按生活场景进入指南
-- [x] 关键词全文检索，按章节、证据等级和花钱情况筛选
+- [x] 关键词全文检索，按生活主题、不花钱和收藏筛选
 - [x] 浏览器本地收藏，单条分享链接
 - [x] PDF / EPUB / 离线版本入口
 - [ ] **在线问答**：直接提问，回答附对应条目和出处
-- [ ] **Obsidian 知识库**：下载后直接打开，带目录与双链
+- [x] **Obsidian 知识库**：下载后直接打开，带目录、双链与分色关系图
 - [ ] **一页场景清单**：好保存、好打印、好转发
 
-在线问答与 Obsidian 还没有上线。[告诉我们你最想先用哪个 →](https://github.com/Fangx-AI/better-life/issues/new/choose)
+Obsidian Vault 已生成，可下载仓库中的 ZIP。DeepSeek 问答已在本地完成真实接口验证，公网问答仍需独立 HTTPS 服务端。[反馈使用问题 →](https://github.com/Fangx-AI/better-life/issues/new/choose)
+
+### 把建议，变成自己的生活指南
+
+本地第一版已支持：把回答收进自己的目录、按主题整理、编辑正文、手动记录行动、查看与恢复历史版本、导出到 Obsidian；后来有新问题，可以结合当前指南和自己确认的情况继续问，新稿确认后才保存。
+
+这部分使用真实服务端数据库，不是只放在当前浏览器的聊天记录。**私人指南与 Pricing 尚未在公网开放；真实邮箱登录和付款也未开通。**详见[个人指南说明](docs/PERSONAL-GUIDE.md)与[本机体验／后端接通说明](docs/MEMBERSHIP-SERVICE.md)。完整原书、检索与下载继续免费。
 
 ## 值得收藏，也值得发给有需要的人
 
@@ -95,11 +102,11 @@ PDF、EPUB、离线 HTML 的下载来自原作者的发布页，可能比本项�
 
 内容来自 **[eternity4719 的《高性价比人生指南》](https://github.com/eternity4719/HowToLiveBetter)**。感谢原作者整理正文、证据与原始出处。
 
-Better Life 是在原书基础上制作的使用入口：新增场景导航、检索界面、收藏和分享，**没有改写正文，也不是原项目的官方版本**。
+Better Life 是在原书基础上制作的使用入口：新增场景导航、检索界面、收藏和分享，**原书内容快照未改写，也不是原项目的官方版本**。页面隐藏编辑分级字样，保留实际限制与适用条件；完整文字可通过「章节原文」核对。
 
 当前内容快照：**2026-10-03**，上游提交 [`fcc93eb`](https://github.com/eternity4719/HowToLiveBetter/commit/fcc93eb9a4bdc26e8a4e4c94bdaae0a89265927b)。不自动跟随上游更新。
 
-收藏留在当前浏览器，不会上传，也不会自动跨设备同步。证据等级沿用原书；它不等于一条建议适合所有人，具体条件见原文。
+收藏留在当前浏览器，不会上传，也不会自动跨设备同步。先看建议是否适合自己的情况；具体条件和出处都可查看原文。
 
 正文：[CC BY 4.0](LICENSE-CONTENT) · 代码：[MIT](LICENSE)
 

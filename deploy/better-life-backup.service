@@ -1,0 +1,18 @@
+# 模板，尚未安装；新快照在同一调用内完成解密恢复校验。离机存储另行配置。
+[Unit]
+Description=Better Life encrypted SQLite online backup and restore check
+After=network.target
+
+[Service]
+Type=oneshot
+User=better-life
+Group=better-life
+WorkingDirectory=/var/www/better-life-current
+EnvironmentFile=/etc/better-life/production.env
+ExecStart=/usr/bin/node scripts/membership-backup.mjs create
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/better-life /var/backups/better-life

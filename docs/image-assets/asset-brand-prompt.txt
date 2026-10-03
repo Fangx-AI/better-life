@@ -1,0 +1,9 @@
+Use case: logo-brand.
+Asset type: a single raster brand icon for Better Life.
+Input image: reference screenshot supplied only as visual style reference for the small B brand icon at the top left. Do not reproduce any of the website.
+Primary request: create the same minimal warm coral-red rounded square icon with a simple white uppercase B centered inside. Match the reference's warm bright coral-red hue and gently rounded corners. The B has a clean modern sans-serif shape, thin-to-medium stroke, excellent clarity.
+Composition: 512x512 square image. The coral rounded square should occupy roughly 90% of the canvas, with a small uniform pure white margin on all sides. All surrounding area pure white. Flat front view.
+Constraints: only the single white uppercase B, coral-red rounded square, and white margin. No other words, symbols, decorations, gradients, textures, shadows, mockup, paper, webpage, watermark, or annotation. Keep edges crisp and typography centered.
+
+Generation mode: built-in image_gen.
+Final asset: C:\Users\PC\Documents\Codex\2026-10-03\new-chat\outputs\better-life\public\media\brand.png

@@ -1,0 +1,7 @@
+Mode: built-in image_gen
+Use case: ads-marketing
+Asset type: single transparent raster handwritten note for website reading section, landscape about 300x110 design space, output at least 900x330 pixels.
+Reference role: the supplied website screenshot is a style reference only. Match the handwritten note in the top-right of its bottom reading section, not the whole webpage.
+Primary request: exactly two lines of authentic natural handwritten simplified Chinese in a grey-brown pen color, gently angled upward and with real varied human pen strokes. First line exactly "生活中的坑不止一个"; second line exactly "但总有办法更好地解决". One short curved orange hand-drawn underline below the end of the second line, matching the reference. Airy line spacing and loose natural handwriting, yet clearly readable.
+Background: genuinely transparent alpha, not white, not a transparency checkerboard.
+Constraints: only the specified two lines and the short orange underline. No UI, no cards, no icons, no additional words, no diagram, no webpage, no border, no shadows, no watermark. Ensure precise Chinese characters. Entire note comfortably inside the canvas.

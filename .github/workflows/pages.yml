@@ -17,13 +17,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm ci
       - run: npm run check
+        env:
+          VITE_QA_API_URL: ${{ vars.QA_API_URL }}
       - uses: actions/configure-pages@v5
         if: github.event_name != 'pull_request'
       - uses: actions/upload-pages-artifact@v4
         if: github.event_name != 'pull_request'
         with:
-          path: dist
+          path: dist/client
   deploy:
     if: github.event_name != 'pull_request'
     needs: check
