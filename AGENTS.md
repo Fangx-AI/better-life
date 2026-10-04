@@ -6,6 +6,7 @@
 - 首页向下滚动的展示视觉以 docs/image-assets/homepage-knowledge-selected.png 为准（本轮用户选定第一张长页稿）：真实关系图谱、问答示例、书桌大图下载区；保留既有首屏。不要退回纯文字介绍板块。
 - 2026-10-04 用户要求：具体条款与检索移到独立阅读页；桌面左侧章节目录、右侧阅读，手机可展开目录。首页只保留场景、提问、展示和阅读入口，不再堆条款列表。
 - 2026-10-04 用户要求：首页图谱下不再显示四场景切换和「全部 34 个主题」标签目录；保留图谱、缩放、建议预览和条款入口，章节浏览统一到独立阅读页。
+- 2026-10-04 用户要求：首页装饰背景两侧不能有硬切白边；沿图片实际边缘渐隐融入页面，保留手写字与图片比例，不拉伸正文或破坏手机裁切。
 - 使用 React / Vite / Tailwind / Motion，前端仍为静态 Pages，DeepSeek 问答需独立服务端；交互组件全部基于 Aceternity 官方公开 registry，不另引 UI 库。
 - 官方组件原始快照在 docs/aceternity/；允许品牌、响应式、无障碍和真实数据适配，记录差异。
 - 保留 Product Design starter 的 worker/、.openai/、scripts/prepare-sites-build.mjs 和 tests/sites-worker.test.mjs；Pages 发布 dist/client。
