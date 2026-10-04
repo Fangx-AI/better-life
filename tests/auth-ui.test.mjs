@@ -18,6 +18,19 @@ test('auth UI: login contains only verification controls and optional checkout r
   assert.match(source, /role="alert"/);
 });
 
+test('auth UI: branded visual hierarchy is scoped to login, without new login providers', () => {
+  const source = readFileSync(new URL('../src/components/membership/account-dialog.jsx', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../src/auth-polish.css', import.meta.url), 'utf8');
+  assert.match(source, /view === 'login' \? 'member-dialog member-dialog-login' : 'member-dialog'/);
+  assert.match(source, /view === 'login' && <img className="member-login-brand"/);
+  assert.match(source, /src=\{`\$\{base\}media\/brand\.webp`\}/);
+  assert.match(css, /\.member-dialog-login \.member-toolbar h2\{font-size:28px/);
+  assert.match(css, /\.member-dialog\.member-dialog-login\{width:min\(456px,100%\)/);
+  assert.match(css, /\.member-dialog-login \.member-auth-form input\{height:52px;font-size:16px/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.doesNotMatch(source, /Login with Github|登录 Google|auth\/github|auth\/google/);
+});
+
 test('auth UI: old email-only catalog is compatible, never invents SMS capability', () => {
   const result = validateMembershipStatus(catalog());
   assert.equal(result.emailLoginAvailable, true);

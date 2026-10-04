@@ -22,3 +22,30 @@
 .member-binding-heading{display:flex;justify-content:space-between;align-items:center;gap:8px}.member-binding-heading b{font-size:14px}.member-binding-heading .button{padding:6px;min-width:36px;min-height:36px;display:grid;place-items:center;color:#8c908f}
 .member-binding>p{font-size:12px;line-height:1.8;color:#9b9189;margin:4px 0 17px}
 @media(max-width:380px){.member-dialog-scroll{padding:22px 18px}.member-login-tabs .button{font-size:12px;gap:4px}.member-phone-prefix{padding-inline:10px}}
+
+/* Aceternity's login-page hierarchy, using this site's existing brand and form components. */
+.member-dialog.member-dialog-login{width:min(456px,100%);border:1px solid #e9e4e0;border-radius:24px;box-shadow:0 24px 80px #18212b29}
+.member-dialog-login .member-toolbar{position:relative;flex-direction:column;justify-content:center;gap:15px;padding:36px 32px 28px;border-bottom:0;flex-shrink:0}
+.member-login-brand{width:44px;height:44px;object-fit:contain}
+.member-dialog-login .member-toolbar h2{font-size:28px;font-weight:750;letter-spacing:-.8px;line-height:1.3;color:#17202b;text-align:center}
+.member-dialog-login .member-toolbar .icon-button{position:absolute;right:10px;top:10px;display:grid;place-items:center;width:44px;height:44px;padding:10px;border-radius:12px;color:#737b83}
+.member-dialog-login .member-toolbar .icon-button:hover{background:#f7f5f2;transform:none;color:#17202b}
+.member-dialog-login .member-toolbar .icon-button:focus-visible{outline:2px solid var(--coral);outline-offset:-2px}
+.member-dialog-login .member-dialog-scroll{padding:0 32px 34px}
+.member-dialog-login .member-login-tabs{padding:4px;margin-bottom:26px;border:1px solid #eee9e4;background:#f8f6f3;border-radius:13px}
+.member-dialog-login .member-login-tabs .button{font-size:14px;font-weight:600;min-height:44px;color:#72716e;border-radius:9px}
+.member-dialog-login .member-login-tabs .button[aria-selected=true]{color:#c44834;background:#fff;box-shadow:0 1px 4px #44250f0c}
+.member-dialog-login .member-login-tabs .button:hover{transform:none}
+.member-dialog-login .member-auth-form{gap:12px}
+.member-dialog-login .member-auth-form label{font-size:14px;font-weight:500;color:#39424b}
+.member-dialog-login .member-auth-form input{height:52px;font-size:16px;background:#fff;border:1px solid #e4ded8;border-radius:11px;box-shadow:0 1px 2px #18212b05}
+.member-dialog-login .member-auth-form input::placeholder{color:#747471}
+.member-dialog-login .member-auth-form .member-phone-field{border-color:#e4ded8;border-radius:11px;background:#fff!important;box-shadow:0 1px 2px #18212b05}
+.member-dialog-login .member-phone-field input{border:0;border-radius:0;box-shadow:none}
+.member-dialog-login .member-phone-prefix{padding-inline:14px;border-color:#e9e3dc;color:#66717b;font-size:15px}
+.member-dialog-login .member-auth-form .coral-button{min-height:52px;font-size:15px;font-weight:650;padding:12px 16px;margin-top:8px;background:#d93830;border:1px solid #ce332c;border-radius:11px;box-shadow:0 2px 4px #9e272318,inset 0 1px 0 #ffffff24}
+.member-dialog-login .member-auth-form .coral-button:hover:not(:disabled){background:#ce342d;transform:none;box-shadow:0 3px 8px #9e272320,inset 0 1px 0 #ffffff24}
+.member-dialog-login .member-auth-form .coral-button:focus-visible{outline:2px solid var(--coral);outline-offset:3px}
+.member-dialog-login .member-code-actions .button{min-height:44px}
+@media(max-width:767px){.member-dialog.member-dialog-login{border-radius:21px}.member-dialog-login .member-toolbar{padding:30px 24px 25px;gap:14px}.member-dialog-login .member-toolbar h2{font-size:26px}.member-dialog-login .member-dialog-scroll{padding:0 24px 28px}.member-dialog-login .member-login-tabs{margin-bottom:23px}}
+@media(prefers-reduced-motion:reduce){.member-dialog-login .button,.member-dialog-login input{transition:none}}

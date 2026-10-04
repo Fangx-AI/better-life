@@ -43,3 +43,9 @@
 - 左侧章节目录基于官方公开 [Sidebar](https://ui.aceternity.com/components/sidebar) registry（原始快照 `docs/aceternity/sidebar.json`），适配已有白底与珊瑚品牌、章节名称、条目计数、当前章节状态和小屏目录入口；不另引 UI 套件。
 - 搜索与筛选继续使用既有 Input、Label 和 Tabs；条款列表及原文展开沿用 Expandable Card / Tracing Beam，按钮沿用 NavbarButton。适配的是阅读导航与响应式布局，不改写原书内容、出处或用户收藏数据。
 - 个人指南中的原文依据与问答失败后的“先读指南”采用统一导航 helper，确保 root 路径和 GitHub Pages 子路径均进入独立阅读页；个人指南的原文依据仍在新标签打开，避免打断未保存草稿。
+
+## 登录视觉层级
+
+- 参考官方真实 [Login](https://ui.aceternity.com/login) 页的居中品牌标识、明确标题和表单留白；不是将 Tracing Beam 滚动光束塞进短登录表单。
+- 沿用现有公开 Input / Label、NavbarButton 与 Motion 弹窗，使用已有品牌 B 资产。登录专属 modifier 调整标题、宽度、字段和主按钮；会员/订单视图样式不变。
+- 保留手机号/邮箱验证码，不复制官方 GitHub 登录按钮或暗示已接通 OAuth；不恢复已删除的营销介绍、本机体验入口。官方整页、黑色品牌的布局适配为本项目珊瑚品牌弹窗，不声称像素克隆或采用 Pro 付费代码。

@@ -88,4 +88,18 @@
 - 本轮所有认证写请求被隔离 mock，未向真实号码/邮箱发码，未访问真实账户或下单。后端本机体验功能及已登录 demo 的真实性标记不改，未验证公网收码或支付。4190 本机服务保持运行。
 - Checklist：删除圈定内容 ✓；保留必要登录操作 ✓；桌面/手机实拍与交互复验 ✓；原文及后台配置不变 ✓。仍未穷举真实 iOS/Android 与其他浏览器，属于验收范围限制。
 
+## 同日后续：参考 Aceternity 登录页补回设计层次
+
+- 用户反馈来源：`C:/Users/PC/AppData/Local/Temp/codex-clipboard-a288a471-fe7a-4b39-9834-c83a2bc2529d.png`（2559×1398），认为删除文案后的普通工具条式表单过于简单。
+- Source visual truth：实际打开用户给定 Tracing Beam 页面，并从网站 Login 入口进入 [官方真实登录页](https://ui.aceternity.com/login)，保存 `C:/Users/PC/Documents/Codex/2026-10-03/new-chat/outputs/better-life/output/playwright/aceternity-login-reference.jpg`。仅查看，不输入任何账号或提交第三方登录。
+- 参考 tab 报告 CSS viewport 1280×720、devicePixelRatio 1.5；实际截图文件为 1253×705 JPEG，而非完整原生密度画布。实现同 CSS 视口原拍 `output/playwright/login-visual-reference-1280.png` 为 1280×720、1x；另将实现按参考导出尺寸缩至 `login-visual-reference-normalized-1253.png`（1253×705），原图均保留。源图与规范化实现同一次图片输入比较构图、层级和状态，不把工具缩减或不同字体当成像素克隆差异。
+- State：官方与实现均为邮箱登录、邮箱为空、未登录；官方为整页，产品仍为弹窗。适配保留现有珊瑚品牌、手机号/邮箱两渠道，不复制官方黑色主题、短说明、GitHub OAuth 或页脚。Tracing Beam 是滚动内容效果，并非此登录表单使用的组件。
+- 最新 implementation screenshots：`C:/Users/PC/Documents/Codex/2026-10-03/new-chat/outputs/better-life/output/playwright/login-visual-desktop-1440.png`（1440×1000，1x）、`login-visual-mobile-390.png`（390×844，1x）、`login-visual-code-320.png`（320×640，1x）。聚焦证据为同轮实际 element 截图 `login-visual-card.png`，456×428 像素，用于清晰检查标题、tabs、输入和按钮；原全视口截图仍保留。所有最终截图均实际打开查看。
+- [P2，已修复] 删除杂话后只剩 14px 灰色工具条标题，缺乏品牌与标题层次。复用现有 B 资产，唯一登录标题居中、桌面 28px/手机 26px；取消横分隔工具条感并调整留白，未加回营销文字。修后品牌与标题中心偏差均 0px，表单字体 16px。
+- [P2，已修复] 初版根选择器与后载入 `.member-dialog` 同优先级，宽度仍是 540px。改为 `.member-dialog.member-dialog-login`，仅登录窗口实测 456×427.39；手机 370×405.80。会员视图去除 modifier，旧订单/会员样式不变。
+- [P2，已修复] 首次浏览器仍拍到旧构建颜色：按钮白字对比 4.405:1、placeholder 3.417:1。只读复核已指出问题；修改为 `#d93830` / `#747471` 并等待最终构建后重拍，浏览器实算分别 4.607:1、4.688:1。手机号内层 border 为 0，避免原先内外双边框。
+- 五项表面复核：沿用现有中文/系统字体且只提升标题层级；456px 卡片与字段节奏更明确，窄屏无横溢；白底、珊瑚 B/选择态和加深主按钮保留品牌并提高可读性；使用真实既有 B 图像及 Tabler 图标，无新增占位或绘图资产；文案仍只含必要登录动作与状态，不出现本机体验入口或伪造 OAuth。
+- 最终 `npm run check` 257/257，650 条原文零违规、797 处引用通过；Playwright 15/15，覆盖两渠道模拟发码/验证、输入检查、冷却、换邮箱、非登录视图不受影响、唯一标题/品牌/颜色测量、焦点循环/Escape、同参考 CSS 视口、390 与 320 验证码操作及未开放服务状态。pageerror 0、非预期写请求 0；一个预期错误验证码 400 已记录，不声明控制台零错误。
+- Checklist：实际查看官方登录 ✓；沿用既有免费组件/品牌并补层次 ✓；不恢复闲话/新增认证入口 ✓；修复 P2 后重建、重拍和同比 ✓；保持 4190 运行 ✓。没有本轮剩余 P0/P1/P2；不包含真实收码、OAuth 接入、付款、公网部署或真实 iOS/Android 浏览器验收。
+
 final result: passed

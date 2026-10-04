@@ -8,6 +8,7 @@
 - 2026-10-04 用户要求：首页图谱下不再显示四场景切换和「全部 34 个主题」标签目录；保留图谱、缩放、建议预览和条款入口，章节浏览统一到独立阅读页。
 - 2026-10-04 用户要求：首页装饰背景两侧不能有硬切白边；沿图片实际边缘渐隐融入页面，保留手写字与图片比例，不拉伸正文或破坏手机裁切。
 - 2026-10-04 用户要求：登录弹窗只留必要操作，删除营销标题、介绍说明、本机体验入口和底部闲话；保留验证码流程与必要状态/错误提示。
+- 同日登录视觉调整：参考 Aceternity 真实登录页的居中品牌、明确标题与表单层次；简洁不等于没有设计。增强品牌与留白，不加回营销说明或未接通的第三方登录，不把 Tracing Beam 装进短登录表单。
 - 使用 React / Vite / Tailwind / Motion，前端仍为静态 Pages，DeepSeek 问答需独立服务端；交互组件全部基于 Aceternity 官方公开 registry，不另引 UI 库。
 - 官方组件原始快照在 docs/aceternity/；允许品牌、响应式、无障碍和真实数据适配，记录差异。
 - 保留 Product Design starter 的 worker/、.openai/、scripts/prepare-sites-build.mjs 和 tests/sites-worker.test.mjs；Pages 发布 dist/client。
