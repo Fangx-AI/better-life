@@ -77,4 +77,15 @@
 - 验收：最新 `npm run check` 255/255，650 条原文零违规、797 处引用通过。Playwright 19/19，覆盖四视口、1599/1600、1100/1101、767/768 断点、遮罩与图片尺寸同步、正文无横溢、输入可编辑及阅读入口进入 34 章目录；pageerror 0、console error 0、非 GET API 0。未发码、调用模型或付款。
 - 范围：Chromium 桌面与响应式手机视口已验证；未承诺所有真实手机浏览器或 Safari/Firefox 的独立验收。保留 4190 本机服务，不部署公网。
 
+## 同日后续：登录弹窗精简
+
+- Source visual truth：`C:/Users/PC/AppData/Local/Temp/codex-clipboard-bfc649f6-5574-44cf-b1e2-03b80c583d5e.png`（2559×1398）。Implementation screenshots：`C:/Users/PC/Documents/Codex/2026-10-03/new-chat/outputs/better-life/output/playwright/login-cleanup-desktop-1440.png`、`C:/Users/PC/Documents/Codex/2026-10-03/new-chat/outputs/better-life/output/playwright/login-cleanup-mobile-390.png`，分别为 1440×1000、390×844 CSS viewport / 图片，deviceScaleFactor 1，无裁切或密度转换。
+- 状态：未登录、首页顶部、邮箱登录 tab、联系方式为空。源图与最新两张实拍在同一次图片输入中实际比较；来源浏览器缩放未知，不做像素克隆判断。弹窗文字、两种登录方式与按钮原尺寸可读，不需要额外聚焦裁切。
+- [P2，已修复] 用户圈定的营销标题、两行介绍、本机体验入口及底部闲话增加登录负担。删除整个区域、装饰图标及废弃状态/样式，不留占位；保留外层标题、真实验证码流程、不可用状态及错误提示。修后弹窗桌面 540×343、手机 370×325，按钮完整可见，无横向溢出。
+- 五项表面检查：字体/字号沿用现有组件且可读；间距随删除内容自然缩短；白底与珊瑚选中态保留，tab 颜色稳定后截图；仅移除装饰图标，不新增图片或占位；文案仅保留必要动作与真实状态，不把本机体验伪装成手机/邮箱验证。未发现剩余 P0/P1/P2。
+- 首轮自动化误用桌面入口打开手机菜单，后续虚拟时钟干扰 Motion 动画退出与截图；这是测试问题，不据此改产品 CSS。改为真实手机菜单入口、全新浏览器会话及自然动画时钟，并等待 overlay 与 tab 状态稳定后重新截图和复验 Escape。
+- 最终 `npm run check` 256/256，650 条原文零违规、797 处引用通过；Playwright 12/12，覆盖精简结构、两渠道、输入检查、模拟发码/验证、冷却禁用、换邮箱、会员视图、焦点循环/Escape、手机与不可用提示。pageerror 0、非预期写请求 0；一条控制台 400 来自明确模拟的错误验证码，不宣称零错误。
+- 本轮所有认证写请求被隔离 mock，未向真实号码/邮箱发码，未访问真实账户或下单。后端本机体验功能及已登录 demo 的真实性标记不改，未验证公网收码或支付。4190 本机服务保持运行。
+- Checklist：删除圈定内容 ✓；保留必要登录操作 ✓；桌面/手机实拍与交互复验 ✓；原文及后台配置不变 ✓。仍未穷举真实 iOS/Android 与其他浏览器，属于验收范围限制。
+
 final result: passed

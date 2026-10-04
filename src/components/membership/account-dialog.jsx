@@ -14,7 +14,7 @@ import { paymentReturnMessage } from '../../lib/payment-return.mjs';
 const base = import.meta.env.BASE_URL;
 const orderLabels = { created: '待支付', pending: '待支付', paid: '已支付', cancelled: '已取消', expired: '已过期', refunded: '已退款', refund_pending: '退款处理中', partially_refunded: '部分退款' };
 
-function VerificationForm({ channels, initialChannel, binding = false, onSuccess, disabled = false, onBusyChange, children }) {
+function VerificationForm({ channels, initialChannel, binding = false, onSuccess, children }) {
   const { status } = useMembership();
   const [channel, setChannel] = useState(initialChannel || channels[0]), [value, setValue] = useState(''), [sent, setSent] = useState(null), [code, setCode] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState(''), [retryAt, setRetryAt] = useState(0), [now, setNow] = useState(Date.now());
@@ -26,13 +26,13 @@ function VerificationForm({ channels, initialChannel, binding = false, onSuccess
   const targetKey = (kind, input) => { try { return JSON.stringify(authIdentity(kind, input)); } catch { return ''; } };
   const reset = (nextChannel, nextValue) => {
     ++generation.current; controller.current?.abort(); locked.current = false;
-    setChannel(nextChannel); setValue(nextValue); setSent(null); setCode(''); setBusy(false); onBusyChange?.(false); setError(''); setNotice('');
+    setChannel(nextChannel); setValue(nextValue); setSent(null); setCode(''); setBusy(false); setError(''); setNotice('');
     setRetryAt(cooldowns.current.get(targetKey(nextChannel, nextValue)) || 0); setNow(Date.now());
   };
-  const start = () => { if (locked.current || disabled) return null; locked.current = true; setBusy(true); onBusyChange?.(true); const abort = new AbortController(); controller.current = abort; const sequence = ++generation.current; return { abort, current: () => sequence === generation.current && !abort.signal.aborted }; };
-  const finish = task => { if (task.current()) { locked.current = false; setBusy(false); onBusyChange?.(false); } };
+  const start = () => { if (locked.current) return null; locked.current = true; setBusy(true); const abort = new AbortController(); controller.current = abort; const sequence = ++generation.current; return { abort, current: () => sequence === generation.current && !abort.signal.aborted }; };
+  const finish = task => { if (task.current()) { locked.current = false; setBusy(false); } };
   const sendCode = async event => {
-    event?.preventDefault(); if (!available || disabled || locked.current || retryIn) return;
+    event?.preventDefault(); if (!available || locked.current || retryIn) return;
     let identity; try { identity = authIdentity(channel, value); } catch (failure) { setError(failure.message); return; }
     const task = start(); if (!task) return; setError(''); setNotice('');
     try {
@@ -51,7 +51,7 @@ function VerificationForm({ channels, initialChannel, binding = false, onSuccess
     } finally { finish(task); }
   };
   const verify = async event => {
-    event.preventDefault(); if (!available || disabled || !sent || !/^[0-9]{6}$/.test(code) || locked.current) return;
+    event.preventDefault(); if (!available || !sent || !/^[0-9]{6}$/.test(code) || locked.current) return;
     const task = start(); if (!task) return; setError('');
     try {
       const result = await membershipRequest(binding ? 'auth/link/verify' : 'auth/verify', { method: 'POST', body: { ...sent, code }, signal: task.abort.signal });
@@ -60,13 +60,13 @@ function VerificationForm({ channels, initialChannel, binding = false, onSuccess
     finally { finish(task); }
   };
   return <div className="member-verification">
-    {channels.length > 1 && <div className="member-login-tabs" role="tablist" aria-label="登录方式">{channels.map(kind => <NavbarButton key={kind} as="button" type="button" variant="secondary" role="tab" aria-selected={channel === kind} aria-controls={`${id}-panel`} id={`${id}-${kind}-tab`} disabled={disabled} onClick={() => { if (kind !== channel) reset(kind, ''); }}>{kind === 'phone' ? <IconPhone size={17}/> : <IconMail size={17}/>} {kind === 'phone' ? '手机号登录' : '邮箱登录'}</NavbarButton>)}</div>}
+    {channels.length > 1 && <div className="member-login-tabs" role="tablist" aria-label="登录方式">{channels.map(kind => <NavbarButton key={kind} as="button" type="button" variant="secondary" role="tab" aria-selected={channel === kind} aria-controls={`${id}-panel`} id={`${id}-${kind}-tab`} onClick={() => { if (kind !== channel) reset(kind, ''); }}>{kind === 'phone' ? <IconPhone size={17}/> : <IconMail size={17}/>} {kind === 'phone' ? '手机号登录' : '邮箱登录'}</NavbarButton>)}</div>}
     {!available && <p className="member-service-note" role="status">{channel === 'phone' ? '手机验证码' : '邮箱验证码'}暂未开通。{channels.length > 1 && (channel === 'phone' ? status.emailLoginAvailable : status.phoneLoginAvailable) ? '请切换另一种方式登录。' : '你仍可免费阅读和下载指南。'}</p>}
     <form className="member-form member-auth-form" onSubmit={sent ? verify : sendCode} id={`${id}-panel`} role={channels.length > 1 ? 'tabpanel' : undefined} aria-labelledby={channels.length > 1 ? `${id}-${channel}-tab` : undefined}>
       <Label htmlFor={`${id}-identity`}>{channel === 'phone' ? '你的手机号' : '你的邮箱'}</Label>
-      <div className={channel === 'phone' ? 'member-phone-field' : 'member-identity-field'}>{channel === 'phone' && <span className="member-phone-prefix" aria-hidden="true">+86</span>}<Input key={channel} id={`${id}-identity`} name={channel} type={channel === 'phone' ? 'tel' : 'email'} inputMode={channel === 'phone' ? 'tel' : 'email'} autoComplete={channel === 'phone' ? 'tel-national' : 'email'} value={value} onChange={event => reset(channel, channel === 'phone' ? event.target.value.replace(/^\s*\+86\s*/, '') : event.target.value)} placeholder={channel === 'phone' ? '中国大陆 11 位手机号' : 'you@example.com'} maxLength={channel === 'phone' ? 20 : 254} required aria-label={channel === 'phone' ? '中国大陆手机号，国家区号 +86' : '你的邮箱'} disabled={busy || disabled}/></div>
+      <div className={channel === 'phone' ? 'member-phone-field' : 'member-identity-field'}>{channel === 'phone' && <span className="member-phone-prefix" aria-hidden="true">+86</span>}<Input key={channel} id={`${id}-identity`} name={channel} type={channel === 'phone' ? 'tel' : 'email'} inputMode={channel === 'phone' ? 'tel' : 'email'} autoComplete={channel === 'phone' ? 'tel-national' : 'email'} value={value} onChange={event => reset(channel, channel === 'phone' ? event.target.value.replace(/^\s*\+86\s*/, '') : event.target.value)} placeholder={channel === 'phone' ? '中国大陆 11 位手机号' : 'you@example.com'} maxLength={channel === 'phone' ? 20 : 254} required aria-label={channel === 'phone' ? '中国大陆手机号，国家区号 +86' : '你的邮箱'} disabled={busy}/></div>
       {sent && <><Label htmlFor={`${id}-code`}>{channel === 'phone' ? '短信中的 6 位验证码' : '邮箱中的 6 位验证码'}</Label><Input id={`${id}-code`} name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={event => { setCode(event.target.value.replace(/\D/g, '')); setError(''); }} placeholder="输入 6 位验证码" required disabled={busy}/></>}
-      <NavbarButton as="button" type="submit" className="coral-button" disabled={!available || disabled || busy || (sent ? code.length !== 6 : retryIn > 0)}>{busy ? sent ? '正在验证……' : '正在发送……' : sent ? binding ? '确认绑定' : '登录并继续' : retryIn > 0 ? `${retryIn} 秒后可发送` : '发送验证码'}<IconArrowRight size={18}/></NavbarButton>
+      <NavbarButton as="button" type="submit" className="coral-button" disabled={!available || busy || (sent ? code.length !== 6 : retryIn > 0)}>{busy ? sent ? '正在验证……' : '正在发送……' : sent ? binding ? '确认绑定' : '登录并继续' : retryIn > 0 ? `${retryIn} 秒后可发送` : '发送验证码'}<IconArrowRight size={18}/></NavbarButton>
       {sent && <div className="member-code-actions"><NavbarButton as="button" type="button" variant="secondary" onClick={sendCode} disabled={!available || busy || retryIn > 0}>{retryIn > 0 ? `${retryIn} 秒后重新发送` : '重新发送验证码'}</NavbarButton><NavbarButton as="button" type="button" variant="secondary" disabled={busy} onClick={() => reset(channel, '')}>换一个{channel === 'phone' ? '手机号' : '邮箱'}</NavbarButton></div>}
     </form>
     {notice && <p className="member-notice" role="status">{notice}</p>}{error && <p className="member-error" role="alert">{error}</p>}
@@ -76,22 +76,9 @@ function VerificationForm({ channels, initialChannel, binding = false, onSuccess
 
 function LoginForm() {
   const { status, checkoutPlanId, acceptLogin, setAccountView } = useMembership();
-  const [busy, setBusy] = useState(false), [verificationBusy, setVerificationBusy] = useState(false), [error, setError] = useState('');
-  const controller = useRef(null), locked = useRef(false);
-  useEffect(() => () => controller.current?.abort(), []);
-  const localDemo = async () => {
-    if (locked.current || verificationBusy || !status.localDemoAvailable) return;
-    locked.current = true; setBusy(true); setError(''); const abort = new AbortController(); controller.current = abort;
-    try { const data = await membershipRequest('auth/local-demo', { method: 'POST', signal: abort.signal }); if (!abort.signal.aborted) acceptLogin(data); }
-    catch (failure) { if (!abort.signal.aborted) setError(failure.message); }
-    finally { if (!abort.signal.aborted) { locked.current = false; setBusy(false); } }
-  };
-  return <div className="member-login"><div className="member-symbol"><IconPhone size={28}/></div><h3>登录，继续你的好生活。</h3><p className="member-lead">手机号或邮箱验证，免密码登录。<br/>提问额度、已保存的方案，都在同一个账号里。</p>
-    <VerificationForm channels={['phone', 'email']} initialChannel={status.phoneLoginAvailable ? 'phone' : 'email'} onSuccess={acceptLogin} disabled={busy} onBusyChange={setVerificationBusy}/>
-    {status.localDemoAvailable && <div className="member-local-demo"><NavbarButton as="button" type="button" className="outline-button member-wide-button" onClick={localDemo} disabled={busy || verificationBusy}>{busy ? '正在进入……' : '进入本机体验'}<IconArrowRight size={18}/></NavbarButton><p>仅供这台电脑试用，不代表手机号或邮箱验证；不会扣费。</p></div>}
-    {error && <p className="member-error" role="alert">{error}</p>}
+  return <div className="member-login">
+    <VerificationForm channels={['phone', 'email']} initialChannel={status.phoneLoginAvailable ? 'phone' : 'email'} onSuccess={acceptLogin}/>
     {checkoutPlanId && <NavbarButton as="button" variant="secondary" type="button" onClick={() => setAccountView('checkout')} className="member-back-link">返回套餐明细</NavbarButton>}
-    <p className="member-privacy">联系方式仅用于登录和必要通知，不默认订阅营销信息。</p>
   </div>;
 }
 

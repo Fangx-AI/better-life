@@ -1,10 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { authIdentity, authRetrySeconds, maskPhone, memberIdentityLabel, validateMembershipStatus, validateMember, membershipRequest } from '../src/lib/membership-api.mjs';
 import { MEMBERSHIP_PLANS } from '../shared/membership-plans.mjs';
 
 const catalog = (extra = {}) => ({ plans: MEMBERSHIP_PLANS, loginAvailable: true, checkoutAvailable: false, ...extra });
 const member = (user) => ({ user, membership: { planId: 'free' }, quota: { used: 0, remaining: 10, limit: 10 }, orders: [] });
+
+test('auth UI: login contains only verification controls and optional checkout return', () => {
+  const source = readFileSync(new URL('../src/components/membership/account-dialog.jsx', import.meta.url), 'utf8');
+  const login = source.split('function LoginForm() {')[1].split('function LinkedIdentities() {')[0];
+  assert.match(login, /<VerificationForm channels=\{\['phone', 'email'\]\}/);
+  assert.match(login, /onSuccess=\{acceptLogin\}/);
+  assert.match(login, /返回套餐明细/);
+  assert.doesNotMatch(login, /<h3>|<p\b|member-symbol|member-lead|member-local-demo|auth\/local-demo|localDemoAvailable/);
+  assert.match(source, /role="dialog" aria-modal="true" aria-labelledby=/);
+  assert.match(source, /role="alert"/);
+});
 
 test('auth UI: old email-only catalog is compatible, never invents SMS capability', () => {
   const result = validateMembershipStatus(catalog());
