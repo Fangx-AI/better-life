@@ -6,6 +6,14 @@ import { validateQaResponse } from '../src/lib/qa-response.mjs';
 const corpus = JSON.parse(readFileSync(new URL('../public/content.json', import.meta.url)));
 const graph = JSON.parse(readFileSync(new URL('../public/knowledge-graph.json', import.meta.url)));
 
+test('首页图谱不再堆重复主题目录，仍保留图谱交互与条款入口', () => {
+  const source = readFileSync(new URL('../src/components/knowledge-map.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /map-bottom|map-group-tabs|map-topics|setTopics|全部 34 个主题|下方主题按钮/);
+  for (const label of ['放大图谱', '缩小图谱', '恢复完整图谱', '上一条建议', '下一条建议', '查看完整内容', '查看指南按章节阅读']) assert.ok(source.includes(label), label);
+  assert.match(source, /<canvas ref=\{canvas\}/);
+  assert.match(source, /onClick=\{\(\) => onOpen\(entry\)\}/);
+});
+
 test('网站图谱完整覆盖原书主题与条目，全部关联可解析', () => {
   const layout = createKnowledgeLayout(corpus, graph.edges);
   assert.equal(new Set(layout.nodes.map(n => n.id)).size, corpus.counts.entries + corpus.counts.chapters);

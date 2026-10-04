@@ -1,4 +1,3 @@
-.map-group-tabs{border:0;padding:0;margin:0;min-width:0}
 .knowledge-map button:disabled{opacity:.4;cursor:default;transform:none}
 .knowledge-map button:focus-visible{outline:2px solid var(--coral,#ff6547);outline-offset:3px}
 .map-loading>p{margin:0 0 12px}

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { IconArrowRight, IconPlus, IconMinus, IconFocus2, IconHome, IconBook2, IconBriefcase, IconWallet, IconHeart, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { NavbarButton } from './ui/resizable-navbar';
-import { Tabs } from './ui/tabs';
 import { createKnowledgeLayout, createKnowledgeView, findKnowledgeNode, focusKnowledgeNode, graphGroups, isKnowledgeTap, knowledgeHubRadius } from '../lib/knowledge-layout.mjs';
 import { readerText } from '../lib/reader-text.mjs';
 import './graph-polish.css';
@@ -11,7 +10,7 @@ const EMPTY_IDS = [];
 export function KnowledgeMap({ corpus, onOpen, highlighted = EMPTY_IDS }) {
   const [graph, setGraph] = useState(null), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
   const [selected, setSelected] = useState('15-1'), [zoom, setZoom] = useState(1), [pan, setPan] = useState({ x: 0, y: 0 });
-  const [hovered, setHovered] = useState(null), [topics, setTopics] = useState(false), [showRelated, setShowRelated] = useState(false), [dragging, setDragging] = useState(false);
+  const [hovered, setHovered] = useState(null), [showRelated, setShowRelated] = useState(false), [dragging, setDragging] = useState(false);
   const canvas = useRef(null), drag = useRef(null), view = useRef(null), renderer = useRef(null), drawing = useRef(null);
 
   useEffect(() => {
@@ -140,7 +139,7 @@ export function KnowledgeMap({ corpus, onOpen, highlighted = EMPTY_IDS }) {
   return <section id="knowledge-map" className="knowledge-map page-width" aria-labelledby="map-title">
     <div className="map-heading"><h2 id="map-title">把生活经验，<br />连成一张地图。</h2><p className="map-counts">{corpus?.counts.entries || 650} 条建议 · {corpus?.counts.chapters || 34} 个主题{graph && <> · {graph.counts.crossReferences} 条关联</>}</p><p>从一个问题，发现更多解决办法。</p></div>
     <div className="map-stage" aria-busy={!layout && !failed}>
-      {layout ? <canvas ref={canvas} aria-label="650 条建议的互动关系图，点选主题或节点可查看原文；也可以使用下方主题按钮与建议切换按钮。" onPointerDown={e => {
+      {layout ? <canvas ref={canvas} aria-label="650 条建议的互动关系图，点选主题或节点可预览建议；也可以使用预览卡片的建议切换按钮，或通过查看指南按章节阅读。" onPointerDown={e => {
         if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
         drag.current = { id: e.pointerId, type: e.pointerType, x: e.clientX, y: e.clientY, pan, moved: false };
         setHovered(null);
@@ -157,8 +156,6 @@ export function KnowledgeMap({ corpus, onOpen, highlighted = EMPTY_IDS }) {
       <div className="map-tools" aria-label="图谱视图"><NavbarButton as="button" type="button" className="icon-button" aria-label="放大图谱" disabled={!layout || zoom >= 2} onClick={() => setZoom(z => Math.min(2, Math.round((z + .2) * 10) / 10))}><IconPlus size={18} /></NavbarButton><NavbarButton as="button" type="button" className="icon-button" aria-label="缩小图谱" disabled={!layout || zoom <= .6} onClick={() => setZoom(z => Math.max(.6, Math.round((z - .2) * 10) / 10))}><IconMinus size={18} /></NavbarButton><NavbarButton as="button" type="button" className="icon-button" aria-label="恢复完整图谱" disabled={!layout} onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); setHovered(null); }}><IconFocus2 size={18} /></NavbarButton></div>
       {hovered && <p className="map-hover" aria-hidden="true">{hovered.title}</p>}
     </div>
-    <div className="map-bottom"><fieldset className="map-group-tabs" disabled={!layout} aria-label="生活场景"><Tabs tabs={graphGroups.map(g => ({ title: g.title, value: String(g.chapter) }))} value={String(group?.chapter)} onChange={id => choose(layout?.byId.get(`chapter-${id}`))} /></fieldset><NavbarButton as="button" type="button" variant="secondary" disabled={!layout} onClick={() => setTopics(t => !t)} aria-expanded={topics} aria-controls="map-topics">{topics ? '收起主题' : '全部 34 个主题'} <IconArrowRight size={16} /></NavbarButton></div>
-    {topics && <div id="map-topics" className="map-topics" aria-label="全部主题">{corpus?.chapters.map(c => <NavbarButton key={c.id} as="button" type="button" variant="secondary" aria-pressed={entry?.chapter === c.id} onClick={() => choose(layout?.byId.get(`chapter-${c.id}`))}>{c.title}</NavbarButton>)}</div>}
     {related.length > 0 && <div className="map-related"><IconBook2 size={17} /><span>原文里的相关建议</span><div id="map-related-items" className="map-related-items">{(showRelated ? related : related.slice(0, 3)).map(id => <NavbarButton key={id} as="button" type="button" variant="secondary" onClick={() => choose(layout.byId.get(id))}>{layout.byId.get(id).title} <IconArrowRight size={14} /></NavbarButton>)}</div>{related.length > 3 && <NavbarButton as="button" type="button" variant="secondary" className="map-related-toggle" aria-expanded={showRelated} aria-controls="map-related-items" onClick={() => setShowRelated(value => !value)}>{showRelated ? '收起' : `全部 ${related.length} 条`} <IconArrowRight size={14} /></NavbarButton>}</div>}
   </section>;
 }
