@@ -6,6 +6,8 @@ import { NavbarButton } from '../ui/resizable-navbar';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { useMembership } from './membership-context';
+import { useAnalytics } from '../analytics.jsx';
+import { AccountSettings } from './account-settings.jsx';
 import { membershipRequest, formatMoney, formatMemberDate, safeCheckoutUrl, authIdentity, authRetrySeconds, maskPhone, memberIdentityLabel } from '../../lib/membership-api.mjs';
 
 import '../../auth-polish.css';
@@ -15,7 +17,8 @@ const base = import.meta.env.BASE_URL;
 const orderLabels = { created: '待支付', pending: '待支付', paid: '已支付', cancelled: '已取消', expired: '已过期', refunded: '已退款', refund_pending: '退款处理中', partially_refunded: '部分退款' };
 
 function VerificationForm({ channels, initialChannel, binding = false, onSuccess, children }) {
-  const { status } = useMembership();
+  const track = useAnalytics();
+  const { status, setAccountView } = useMembership();
   const [channel, setChannel] = useState(initialChannel || channels[0]), [value, setValue] = useState(''), [sent, setSent] = useState(null), [code, setCode] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState(''), [retryAt, setRetryAt] = useState(0), [now, setNow] = useState(Date.now());
   const controller = useRef(null), locked = useRef(false), generation = useRef(0), cooldowns = useRef(new Map()), id = useId();
@@ -46,6 +49,7 @@ function VerificationForm({ channels, initialChannel, binding = false, onSuccess
     } catch (failure) {
       if (task.current()) {
         setError(failure.message);
+        if (binding && failure.code === 'reauthentication_required') setAccountView('login');
         if (failure.status === 429) { const until = Date.now() + authRetrySeconds(failure.retryAfter) * 1000; cooldowns.current.set(JSON.stringify(identity), until); setRetryAt(until); setNow(Date.now()); }
       }
     } finally { finish(task); }
@@ -55,8 +59,8 @@ function VerificationForm({ channels, initialChannel, binding = false, onSuccess
     const task = start(); if (!task) return; setError('');
     try {
       const result = await membershipRequest(binding ? 'auth/link/verify' : 'auth/verify', { method: 'POST', body: { ...sent, code }, signal: task.abort.signal });
-      if (task.current()) onSuccess(result);
-    } catch (failure) { if (task.current()) setError(failure.message); }
+      if (task.current()) { onSuccess(result); if (!binding) track('login_complete', { channel }); }
+    } catch (failure) { if (task.current()) { setError(failure.message); if (binding && failure.code === 'reauthentication_required') setAccountView('login'); } }
     finally { finish(task); }
   };
   return <div className="member-verification">
@@ -101,10 +105,11 @@ function MemberOverview() {
   // AnimatePresence keeps the closing dialog mounted briefly after logout.
   if (!me?.user) return null;
   return <div className="member-overview"><p className="member-email">{memberIdentityLabel(me.user)}</p>{me.user.authentication === 'local-demo' && <p className="member-service-note">本机体验账号，仅用于这台电脑上的功能体验。不代表手机号或邮箱验证，不会扣费。</p>}<div className="member-current-plan"><span>当前套餐</span><h3>{me.membership.name || '免费使用'}</h3><p>{me.membership.expiresAt ? `有效至 ${formatMemberDate(me.membership.expiresAt)}` : '完整指南一直免费'}</p></div><div className="member-quota"><div><span>本周期还可以问</span><strong>{me.quota.remaining}<small> / {me.quota.limit} 次</small></strong></div><span className="member-quota-used">已用 {me.quota.used} 次</span></div><div className="member-quota-track" aria-hidden="true"><span style={{ width: `${me.quota.limit ? Math.max(0, Math.min(100, me.quota.remaining / me.quota.limit * 100)) : 0}%` }}/></div><p className="member-period">{me.quota.resetsAt ? `次数更新日：${formatMemberDate(me.quota.resetsAt)}` : '提问次数由服务端按当前套餐确认。'} 成功回答才扣次。</p><div className="member-actions"><NavbarButton href={`${base}?view=guides`} className="coral-button"><IconBook2 size={18}/> 我的人生指南</NavbarButton><NavbarButton as="button" type="button" className="outline-button" onClick={() => openCheckout('member-month')}>{me.membership.planId === 'free' ? '了解会员' : '查看续购明细'}</NavbarButton><NavbarButton as="button" type="button" variant="secondary" onClick={refresh} disabled={loading}><IconRefresh size={17}/> 刷新</NavbarButton></div>
-    <LinkedIdentities key={me.user.id}/><section className="member-orders"><h3>我的订单</h3>{me.orders.length ? <ul>{me.orders.map(order => <li key={order.id}><div><b>{order.planName}</b><span>{formatMemberDate(order.createdAt)} · ¥{formatMoney(order.amountFen)}</span><small>订单号：{order.id}</small></div><span className={`member-order-status ${order.status === 'paid' ? 'is-paid' : ''}`}>{orderLabels[order.status] || '处理中'}</span></li>)}</ul> : <p className="member-empty">还没有订单。免费使用不需要下单。</p>}</section>{!status.checkoutAvailable && <p className="member-service-note">付款暂未开放，不会自动扣款。</p>}{error && <p className="member-error" role="alert">{error}</p>}<NavbarButton as="button" type="button" variant="secondary" className="member-logout" onClick={leave} disabled={busy}><IconLogout size={17}/>{busy ? '正在退出……' : '退出登录'}</NavbarButton></div>;
+    <LinkedIdentities key={me.user.id}/><section className="member-orders"><h3>我的订单</h3>{me.orders.length ? <ul>{me.orders.map(order => <li key={order.id}><div><b>{order.planName}</b><span>{formatMemberDate(order.createdAt)} · ¥{formatMoney(order.amountFen)}</span><small>订单号：{order.id}</small></div><span className={`member-order-status ${order.status === 'paid' ? 'is-paid' : ''}`}>{orderLabels[order.status] || '处理中'}</span></li>)}</ul> : <p className="member-empty">还没有订单。免费使用不需要下单。</p>}</section><AccountSettings key={me.user.id}/>{!status.checkoutAvailable && <p className="member-service-note">付款暂未开放，不会自动扣款。</p>}{error && <p className="member-error" role="alert">{error}</p>}<NavbarButton as="button" type="button" variant="secondary" className="member-logout" onClick={leave} disabled={busy}><IconLogout size={17}/>{busy ? '正在退出……' : '退出登录'}</NavbarButton></div>;
 }
 
 function CheckoutDetails() {
+  const track = useAnalytics();
   const { status, me, checkoutPlanId, setAccountView, refresh } = useMembership();
   const plan = status.plans.find(item => item.id === checkoutPlanId);
   const [order, setOrder] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState('');
@@ -119,6 +124,7 @@ function CheckoutDetails() {
     try {
       const data = await membershipRequest('orders', { method: 'POST', body: { planId: plan.id, requestId: requestId.current }, signal: abort.signal });
       if (!data.order?.id) throw new Error('订单暂时无法读取，请稍后重试。');
+      track('checkout_start', { plan: plan.id });
       setOrder(data.order); if (data.order.status === 'paid') await refresh();
     } catch (e) { if (e.name !== 'AbortError') setError(e.message); }
     finally { if (!abort.signal.aborted) setBusy(false); }
@@ -137,9 +143,11 @@ function CheckoutDetails() {
 }
 
 export function AccountDialog() {
+  const track = useAnalytics();
   const { accountOpen, accountView, checkoutPlanId, closeAccount, me, loading, serviceError, paymentReturn } = useMembership();
   const ref = useRef(null), opener = useRef(null), id = useId();
   const view = accountView === 'login' ? 'login' : accountView === 'checkout' ? 'checkout' : me?.user ? 'overview' : 'login';
+  useEffect(() => { if (accountOpen && view === 'login') track('login_open', { source: 'navigation' }); }, [accountOpen, view, track]);
   useEffect(() => {
     if (!accountOpen) return;
     opener.current = document.activeElement; const old = document.body.style.overflow; document.body.style.overflow = 'hidden';

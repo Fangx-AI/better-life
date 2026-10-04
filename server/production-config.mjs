@@ -2,6 +2,7 @@ import { isAbsolute, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync, lstatSync, realpathSync, accessSync, constants } from 'node:fs';
 import { dirname } from 'node:path';
+import { usageBudgetConfig, USAGE_BUDGET_FIELDS } from '../shared/usage-budget-config.mjs';
 
 export const MEMBERSHIP_DATABASE_APPLICATION_ID = 0x424c4946;
 
@@ -50,6 +51,9 @@ export function productionProblems(env = {}, { projectRoot = project } = {}) {
   const origins = typeof env.QA_ALLOWED_ORIGINS === 'string' ? env.QA_ALLOWED_ORIGINS.split(',').map(value => value.trim()).filter(Boolean) : [];
   if (origins.length !== 1 || origins[0] !== env.MEMBERSHIP_APP_ORIGIN?.replace(/\/$/, '')) problems.push('QA_ALLOWED_ORIGINS');
   if (typeof env.DEEPSEEK_API_KEY !== 'string' || !env.DEEPSEEK_API_KEY.trim()) problems.push('DEEPSEEK_API_KEY');
+  // All four must be explicitly configured; estimates never inherit invented vendor prices.
+  try { if (!usageBudgetConfig(env).configured) problems.push(...USAGE_BUDGET_FIELDS); }
+  catch { problems.push(...USAGE_BUDGET_FIELDS); }
   return problems;
 }
 

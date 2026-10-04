@@ -52,3 +52,18 @@ test('same-origin app: symlinks outside static root are rejected', async t => {
   const response = await fetch(`${h.origin}/outside/secret.txt`);
   assert.equal(response.status, 403); assert.doesNotMatch(await response.text(), /outside-root/);
 });
+
+test('same-origin app: account, operations and sensitive query pages are never indexed or cached', async t => {
+  const h = await fixture(t);
+  for (const query of ['view=guides', 'view=operations', 'view=privacy', 'view=terms', 'view=library&q=synthetic-private', 'view=pricing&checkout=synthetic']) {
+    const response = await fetch(`${h.origin}/?${query}`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('x-robots-tag'), 'noindex, nofollow');
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+  }
+  for (const query of ['', 'view=library&chapter=2&free=true', 'view=pricing']) {
+    const response = await fetch(`${h.origin}/?${query}`);
+    assert.equal(response.headers.get('x-robots-tag'), null);
+    assert.equal(response.headers.get('cache-control'), 'no-cache');
+  }
+});

@@ -79,7 +79,7 @@ test("fresh Sites package imports its complete QA dependency graph without prior
   const root = await mkdtemp(path.join(tmpdir(), "better-life-sites-smoke-"));
   t.after(() => rm(root, { recursive: true, force: true }));
   // Copy only tracked source inputs; an old dist/ cannot make this smoke pass.
-  const inputs = ["scripts/prepare-sites-build.mjs", "worker/index.js", "server/qa.mjs", "server/retrieval.mjs", "shared/qa-notice.mjs", "shared/qa-history.mjs", ".openai/hosting.json"];
+  const inputs = ["scripts/prepare-sites-build.mjs", "worker/index.js", "server/qa.mjs", "server/retrieval.mjs", "shared/qa-notice.mjs", "shared/qa-history.mjs", "shared/usage-budget-config.mjs", ".openai/hosting.json"];
   for (const input of inputs) {
     const destination = path.join(root, input);
     await mkdir(path.dirname(destination), { recursive: true });

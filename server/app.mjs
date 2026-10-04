@@ -44,9 +44,10 @@ export function createStaticMiddleware({ rootDir = resolve(project, 'dist/client
       }
       const actualFile = await realpath(file);
       if (!within(actualRoot, actualFile) || !info.isFile()) return respond(res, 403, '文件不可访问。');
+      const privateNavigation = ['guides', 'operations', 'privacy', 'terms'].includes(url.searchParams.get('view')) || [...url.searchParams.keys()].some(key => !['view', 'chapter', 'free'].includes(key));
       res.writeHead(200, { 'content-type': types[extname(file).toLowerCase()] || 'application/octet-stream',
         'content-length': info.size, 'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin',
-        'cache-control': pathname.startsWith('assets/') ? 'public, max-age=31536000, immutable' : 'no-cache' });
+        ...(extname(file) === '.html' && privateNavigation ? { 'x-robots-tag': 'noindex, nofollow', 'cache-control': 'no-store' } : { 'cache-control': pathname.startsWith('assets/') ? 'public, max-age=31536000, immutable' : 'no-cache' }) });
       if (req.method === 'HEAD') return res.end();
       await pipeline(createReadStream(actualFile), res);
     } catch {

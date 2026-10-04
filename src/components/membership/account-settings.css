@@ -1,0 +1,32 @@
+/* Existing Aceternity controls; scoped to the compact account section. */
+.account-settings{max-width:100%;min-width:0;margin-top:24px;border-top:1px solid #ece7e3;padding-top:20px;color:#39424b}
+.account-settings *{box-sizing:border-box;min-width:0}
+.account-settings .account-settings-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.account-settings h3{margin:0;font-size:15px;font-weight:650}
+.account-settings .account-settings-heading .button{min-height:44px;padding:8px 0;font-size:12px;color:#965b48;white-space:normal}
+.account-settings .account-settings-note{font-size:12px;line-height:1.8;color:#737b82;margin:8px 0 12px;overflow-wrap:anywhere}
+.account-settings .account-settings-state{font-size:12px;line-height:1.8;color:#8c614f;margin:10px 0;overflow-wrap:anywhere}
+.account-settings .account-settings-error{font-size:12px;line-height:1.8;color:#b63129;margin:10px 0;overflow-wrap:anywhere}
+.account-settings .account-settings-form{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:12px}
+.account-settings label{font-size:13px;line-height:1.5;color:#4a5056}
+.account-settings select,.account-settings input{width:100%;max-width:100%;min-width:0;min-height:44px;font-size:16px;border:1px solid #e6ddd6;border-radius:9px;background:#fff;color:#39424b;padding:10px 12px;box-shadow:none}
+.account-settings select{text-overflow:ellipsis;padding-right:26px}
+.account-settings select:focus-visible,.account-settings input:focus-visible{outline:2px solid var(--coral,#d75941);outline-offset:2px}
+.account-settings .account-settings-form>div{max-width:100%;min-width:0}
+.account-settings .account-settings-form .button{min-height:44px;max-width:100%;white-space:normal;line-height:1.5;font-size:13px;box-shadow:none}
+.account-settings .button:disabled,.account-settings select:disabled,.account-settings input:disabled{cursor:not-allowed;opacity:.55;transform:none}
+.account-settings .account-settings-requests{list-style:none;padding:0;margin:15px 0 0;display:grid;gap:10px}
+.account-settings .account-settings-requests li{border:1px solid #eee7e2;background:#fdfaf7;border-radius:10px;padding:12px}
+.account-settings .account-settings-requests b{display:block;font-size:13px;font-weight:600;line-height:1.7}
+.account-settings .account-settings-requests small{display:block;font-size:11px;line-height:1.8;color:#80868b;overflow-wrap:anywhere}
+.account-settings .account-settings-links{display:flex;flex-wrap:wrap;gap:4px 18px;padding:13px 0 10px}
+.account-settings .account-settings-links a{display:inline-flex;align-items:center;min-height:44px;color:#965b48;font-size:12px;text-decoration:underline;text-underline-offset:4px}
+.account-settings .account-settings-links a:focus-visible,.account-settings summary:focus-visible,.account-settings .button:focus-visible{outline:2px solid var(--coral,#d75941);outline-offset:3px}
+.account-settings .account-settings-delete{border-top:1px solid #ece7e3;padding-top:8px}
+.account-settings summary{padding:12px 0;min-height:44px;cursor:pointer;color:#6d7378;font-size:13px;font-weight:550;line-height:1.6}
+.account-settings .account-settings-delete-panel{padding:2px 0 0}
+.account-settings .account-settings-blockers{margin:10px 0 14px;padding-left:19px;color:#8c614f;font-size:12px;line-height:1.9;overflow-wrap:anywhere}
+.account-settings .account-settings-reauth .button,.account-settings .account-settings-status-refresh{min-height:44px;font-size:12px;padding:8px 0;color:#965b48}
+.account-settings .account-settings-danger{border:1px solid #c36a60;background:#fff8f6;color:#ad4035;border-radius:9px}
+@media(max-width:767px){.account-settings .account-settings-heading{gap:8px}.account-settings .account-settings-form .button{width:100%}.account-settings .account-settings-links{gap:0 16px}.account-settings select,.account-settings input{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.account-settings .button,.account-settings input{transition:none}}

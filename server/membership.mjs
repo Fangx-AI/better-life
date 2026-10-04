@@ -6,6 +6,8 @@ import { createTencentSmsSender } from './auth-delivery.mjs';
 import { createAliyunSmsSender, createAliyunEmailSender } from './aliyun-delivery.mjs';
 import { PaymentNotificationError } from './payment-hupijiao.mjs';
 import { validateQaHistory, QaHistoryError } from '../shared/qa-history.mjs';
+import { OperationsError } from './operations.mjs';
+import { createAccountLifecycle, AccountLifecycleError } from './account-lifecycle.mjs';
 
 const COOKIE = 'better_life_session';
 const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extra } });
@@ -87,7 +89,9 @@ export function createSmsSender({ env = {}, ...options } = {}) {
 
 // paymentProvider 仅接受服务端受信适配器注入；环境变量或前端回跳不能造出 paid。
 // 必须提供 merchantId/createCheckout/verifyPayment。verifyPayment 内完成平台验签/查单。
-export function createMembershipHandler({ env = {}, store = createMembershipStore(), sender = createEmailSender({ env }), phoneSender = createSmsSender({ env }), paymentProvider = null, qaHandler, personalQaHandler, getCorpus, getClientId = () => 'shared', now = Date.now } = {}) {
+export function createMembershipHandler({ env = {}, store = createMembershipStore(), sender = createEmailSender({ env }), phoneSender = createSmsSender({ env }), paymentProvider = null, qaHandler, personalQaHandler, getCorpus, getClientId = () => 'shared', now = Date.now, operationsStore = null, onPaymentConfirmed } = {}) {
+  const lifecycle = createAccountLifecycle({ store, now });
+  const supportUrl = (() => { try { const value = new URL(env.MEMBERSHIP_SUPPORT_URL); return value.protocol === 'https:' && !value.username && !value.password ? value.href : null; } catch { return null; } })();
   const secret = typeof env.MEMBERSHIP_AUTH_SECRET === 'string' ? env.MEMBERSHIP_AUTH_SECRET : '';
   const secretReady = secret.length >= 32;
   const emailLoginAvailable = secretReady && typeof sender === 'function';
@@ -143,6 +147,15 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
     const user = sessionUser(request);
     if (!user) error(401, 'login_required', '登录后可查看会员、提问次数和已保存的回答。');
     return user;
+  };
+  const revalidateUser = (request, previous) => {
+    const current = requireUser(request);
+    if (current.id !== previous.id) error(401, 'login_required', '登录状态已改变，请重新登录。');
+    return current;
+  };
+  const requireFreshIdentity = (request, user) => {
+    revalidateUser(request, user);
+    if (!lifecycle.freshnessStatus(user, { tokenHash: sessionHash(request) }).freshAuthentication) error(403, 'reauthentication_required', '请先用已绑定的手机号或邮箱重新登录，再绑定新的登录方式。');
   };
   const guideView = row => ({ ...decrypt(row.content_cipher), id: row.id, revision: row.revision, createdAt: new Date(row.created_at).toISOString(), updatedAt: new Date(row.updated_at ?? row.created_at).toISOString() });
   const profileView = user => { const row = store.profile(user); return { facts: row ? decrypt(row.facts_cipher) : [], revision: row?.revision ?? 0 }; };
@@ -212,6 +225,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
       if (profileFacts.length !== factIds.length) error(400, 'unconfirmed_facts', '选中的个人情况尚未确认，请刷新后重新选择。');
       context = { guide, profileFacts };
     }
+    revalidateUser(request, user);
     const reservation = store.reserve(user, body.requestId, hash(JSON.stringify({ question, ...(history.length ? { history } : {}), guideId, guideRevision: context?.guide.revision, profileFacts: context?.profileFacts })));
     if (reservation.cached) return json({ ...decrypt(reservation.cached), question, quota: store.me(user).quota, reused: true });
     try {
@@ -241,7 +255,9 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
       try {
         const event = await paymentProvider.verifyNotification(request);
         if (event.merchantId !== paymentProvider.merchantId) return plain('payment_mismatch', 403);
-        store.acceptPaymentEvent(event);
+        const paidOrder = store.acceptPaymentEvent(event);
+        // 统计不能替代验签/入账，也不能让已提交付款被统计故障否决。
+        if (event.type === 'paid' && typeof onPaymentConfirmed === 'function') { try { onPaymentConfirmed(paidOrder); } catch {} }
         // 只有已提交的事实/幂等重复才 acknowledge；失败让平台重试。
         return plain('success');
       } catch (value) {
@@ -257,12 +273,12 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
       store.cleanup();
       if (path === '/api/ask') return await ask(request);
       const expected = origin(request);
-      if (['POST', 'PATCH', 'DELETE'].includes(request.method) && /^\/api\/(guides|profile|saved-answers|orders)(?:\/|$)/.test(path)) {
+      if (['POST', 'PATCH', 'DELETE'].includes(request.method) && /^\/api\/(guides|profile|saved-answers|orders|refund-requests|account)(?:\/|$)/.test(path)) {
         const user = requireUser(request);
         store.throttle(`private-write:${user.id}`, 30, 60000);
         store.throttle('private-write:global', 500, 60000);
       }
-      if (path === '/api/membership' && request.method === 'GET') return json({ enforced, loginAvailable: authReady, emailLoginAvailable, phoneLoginAvailable, localDemoAvailable: localDemoAllowed(request), checkoutAvailable, annualAvailable,
+      if (path === '/api/membership' && request.method === 'GET') return json({ enforced, loginAvailable: authReady, emailLoginAvailable, phoneLoginAvailable, localDemoAvailable: localDemoAllowed(request), checkoutAvailable, annualAvailable, supportUrl, refundRequestsAvailable: Boolean(operationsStore),
         plans: MEMBERSHIP_PLANS.map(plan => ({ ...plan, purchasable: plan.id !== 'free' && checkoutAvailable && (plan.id !== 'member-year' || annualAvailable) })) });
       if (path === '/api/me' && request.method === 'GET') return json(store.me(sessionUser(request)));
       if (path === '/api/auth/local-demo' && request.method === 'POST') {
@@ -278,6 +294,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
         if (user?.auth_kind === 'local-demo') error(403, 'identity_link_forbidden', '本机体验账号不能绑定正式登录信息，请先退出体验账号。');
         if (!authReady) error(503, 'login_not_configured', '登录服务尚未开通，请稍后再试。');
         const body = await readJson(request, 4096), identity = normalizeIdentity(body, linking ? 'link' : 'login', user?.id ?? null);
+        if (linking) requireFreshIdentity(request, user);
         requireIdentityChannel(identity);
         const code = String(randomInt(1000000)).padStart(6, '0'), salt = randomBytes(16).toString('hex'), digest = codeDigest(identity, code, salt);
         store.issueCode(identity, digest, salt, getClientId(request), { smsDailyLimit });
@@ -290,19 +307,40 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
         if (current?.auth_kind === 'local-demo') error(403, 'identity_link_forbidden', '本机体验账号不能绑定正式登录信息，请先退出体验账号。');
         if (!authReady) error(503, 'login_not_configured', '登录服务尚未开通，请稍后再试。');
         const body = await readJson(request, 4096), identity = normalizeIdentity(body, linking ? 'link' : 'login', current?.id ?? null);
+        if (linking) requireFreshIdentity(request, current);
         requireIdentityChannel(identity);
         if (typeof body.code !== 'string' || !/^\d{6}$/.test(body.code)) error(400, 'invalid_code', '请输入收到的 6 位验证码。');
         const session = randomBytes(32).toString('base64url');
         const user = store.verifyCode(identity, row => timingSafeEqual(Buffer.from(row.digest, 'hex'), Buffer.from(codeDigest(identity, body.code, row.salt), 'hex')), getClientId(request), hash(session));
         // 验证成功旋转当前浏览器旧会话，防会话固定。
         store.revokeSession(sessionHash(request));
+        // 只有原有身份正常登录才可授权注销；新绑定通道不算本人重新认证。
+        if (!linking) lifecycle.markAuthenticated(hash(session));
         return json(store.me(user), 200, { 'set-cookie': cookie(session, expected.protocol === 'https:') });
       }
       if (path === '/api/auth/logout' && request.method === 'POST') { store.revokeSession(sessionHash(request)); return json({ ok: true }, 200, { 'set-cookie': cookie('', expected.protocol === 'https:', true) }); }
+      if (path === '/api/account/status' && request.method === 'GET') return json(lifecycle.accountStatus(requireUser(request), { tokenHash: sessionHash(request) }));
+      if (path === '/api/account' && request.method === 'DELETE') {
+        const user = requireUser(request), body = await readJson(request, 1024);
+        if (Object.keys(body).some(key => key !== 'confirmation')) error(400, 'invalid_request', '请只提交注销确认。');
+        const result = lifecycle.deleteAccount(user, { tokenHash: sessionHash(request), confirmation: body.confirmation });
+        return json(result, 200, { 'set-cookie': cookie('', expected.protocol === 'https:', true) });
+      }
+      if (path === '/api/refund-requests' && ['GET', 'POST'].includes(request.method)) {
+        const user = requireUser(request);
+        if (!operationsStore) error(503, 'refund_requests_unavailable', '退款申请暂未开放，请联系本站客服。');
+        if (request.method === 'GET') return json(operationsStore.listUserRefundRequests(user));
+        const body = await readJson(request, 1024);
+        revalidateUser(request, user);
+        if (Object.keys(body).some(key => !['orderId', 'reason'].includes(key))) error(400, 'invalid_request', '请只提交订单和退款原因。');
+        const result = operationsStore.submitRefundRequest(user, body);
+        return json(result, result.created ? 201 : 200);
+      }
       if (path === '/api/orders' && request.method === 'POST') {
         const user = requireUser(request);
         if (!checkoutAvailable) error(503, 'checkout_not_configured', '付款尚未开放，当前不会创建收费订单或扣款。');
         const body = await readJson(request, 4096), plan = membershipPlan(body.planId);
+        revalidateUser(request, user);
         if (!plan || plan.id === 'free' || (plan.id === 'member-year' && !annualAvailable)) error(400, 'plan_unavailable', '这个套餐暂未开放购买。');
         if (!validId(body.requestId)) error(400, 'invalid_request_id', '订单请求编号无效，请重新提交。');
         const result = store.createOrder(user, plan, body.requestId, paymentProvider.merchantId);
@@ -336,6 +374,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
         if (new Set(sourceIds).size !== sourceIds.length || entries.length !== sourceIds.length) error(400, 'invalid_sources', '回答引用无法核对，暂不保存。');
         let checked; try { checked = validateAnswer({ ...result.answer, insufficient: false }, entries); } catch { error(400, 'invalid_saved_answer', '回答内容或引用无法核对，暂不保存。'); }
         const saved = { status: 'answered', question: result.question.trim(), answer: checked.answer, sources: checked.sources, snapshotDate: corpus.source.snapshotDate, model: '用户保存', provenance: 'user-provided' };
+        revalidateUser(request, user);
         return json({ answer: { ...store.saveAnswer(user, encrypt(saved)), result: saved } }, 201);
       }
       if (path.startsWith('/api/saved-answers/') && request.method === 'DELETE') {
@@ -346,6 +385,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
       if (path === '/api/profile' && request.method === 'GET') return json(profileView(requireUser(request)));
       if (path === '/api/profile' && request.method === 'PATCH') {
         const user = requireUser(request), body = await readJson(request, 65536);
+        revalidateUser(request, user);
         validateRevision(body.revision);
         if (!Array.isArray(body.facts) || body.facts.length > 30 || body.facts.some(fact => !fact || (fact.id != null && (typeof fact.id !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(fact.id))) || typeof fact.label !== 'string' || !fact.label.trim() || fact.label.length > 80 || typeof fact.value !== 'string' || !fact.value.trim() || fact.value.length > 500)) error(400, 'invalid_facts', '个人情况最多 30 项，每项内容最多 500 字。');
         const existing = new Map(profileView(user).facts.map(fact => [fact.id, fact]));
@@ -365,6 +405,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
         const user = requireUser(request), body = await readJson(request, 131072);
         if (typeof getCorpus !== 'function') error(503, 'guides_unavailable', '私人指南服务尚未配置。');
         const guide = await validateGuide(body, user);
+        revalidateUser(request, user);
         return json({ guide: guideView(store.createGuide(user, encrypt(guide))) }, 201);
       }
       const guideMatch = /^\/api\/guides\/([a-zA-Z0-9_-]+)(?:\/(versions)(?:\/([a-zA-Z0-9_-]+))?|\/(restore|export|ask))?$/.exec(path);
@@ -384,6 +425,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
             changes.factIds = current.factIds.filter(factId => confirmed.has(factId));
           }
           const next = await validateGuide({ ...current, ...changes }, user, current);
+          revalidateUser(request, user);
           return json({ guide: guideView(store.updateGuide(user, id, body.revision, encrypt(next))) });
         }
         if (action === 'versions' && request.method === 'GET') {
@@ -392,6 +434,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
         }
         if (action === 'restore' && request.method === 'POST') {
           const body = await readJson(request, 4096); validateRevision(body.revision);
+          revalidateUser(request, user);
           if (typeof body.versionId !== 'string') error(400, 'invalid_version', '请选择需要恢复的版本。');
           const version = store.ownedVersion(user, id, body.versionId);
           // 旧版本可能包含已经删除的个人情况编号：恢复时去掉失效关联，不恢复个人事实。
@@ -417,7 +460,7 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
       const known = /^\/api\/(membership|me|profile|guides|auth\/(code|verify|logout|local-demo|link\/(code|verify))|orders(?:\/[^/]+)?|saved-answers(?:\/[^/]+)?)$/.test(path);
       return failure(known ? 405 : 404, known ? 'method_not_allowed' : 'not_found', known ? '这个接口不支持此操作。' : '会员接口不存在。');
     } catch (value) {
-      if (value instanceof MembershipError) return failure(value.status, value.code, value.message);
+      if (value instanceof MembershipError || value instanceof OperationsError || value instanceof AccountLifecycleError) return failure(value.status, value.code, value.message);
       if (request.signal.aborted) return failure(499, 'cancelled', '操作已取消。');
       return failure(503, 'membership_unavailable', '会员服务暂不可用，请稍后重试。');
     }

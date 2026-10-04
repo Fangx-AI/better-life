@@ -1,6 +1,7 @@
 // 原书 RAG。对话上下文由当前页面携带，服务器不记录问题、正文或模型回答。
 import { cleanQaNotice } from '../shared/qa-notice.mjs';
 import { validateQaHistory, QaHistoryError, conversationRetrievalQuestion, conversationStepFocus, isFollowupQuestion } from '../shared/qa-history.mjs';
+import { UsageBudgetError } from '../shared/usage-budget-config.mjs';
 const ENDPOINT = 'https://api.deepseek.com/chat/completions';
 import { retrieveEntries } from './retrieval.mjs';
 export { retrieveEntries } from './retrieval.mjs';
@@ -76,7 +77,7 @@ const systemPrompt = `你是高性价比人生指南的阅读助手。只能依�
 输出一个json对象且仅包含：{"intro":"简短回答","steps":[{"title":"行动标题","detail":"依据原文的解释及必要条件","entryIds":["引用条目ID"]}],"caveat":"","insufficient":false}。
 最多4个步骤，每个步骤必须引用至少一个所提供的真实条目ID。引用必须与具体结论相关。不得仅凭相关关键词强行作答。若原书不能支持回答，insufficient=true，steps=[]，intro说明缺少哪些资料。不要复述用户的敏感信息。`;
 
-export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env = {}, getClientId = () => 'shared', resolveContext, timeoutMs = 45000, readBodyTimeoutMs = 10000, rateLimit = 12, globalRateLimit = 60, rateWindowMs = 60000, bucketCapacity = 1000, maxConcurrent = 3, now = Date.now } = {}) {
+export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env = {}, getClientId = () => 'shared', resolveContext, usageBudget = null, timeoutMs = 45000, readBodyTimeoutMs = 10000, rateLimit = 12, globalRateLimit = 60, rateWindowMs = 60000, bucketCapacity = 1000, maxConcurrent = 3, now = Date.now } = {}) {
   if (typeof getCorpus !== 'function') throw new TypeError('getCorpus is required');
   // 单实例、内存级限流只能减少误操作；多实例/生产防刷需外部网关或持久限流。
   const buckets = new Map();
@@ -105,6 +106,7 @@ export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env =
     let acquired = false;
     let timer;
     let abortListener;
+    let budgetReservation;
     try {
       if (request.signal.aborted) throw new QaError(499, 'cancelled', '本次问答已取消。');
       if (!configured) throw new QaError(503, 'not_configured', '问答服务尚未配置，暂时可以查看指南原文。');
@@ -130,6 +132,9 @@ export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env =
       const history = validateQaHistory(body.history);
       const controller = new AbortController();
       let timedOut = false;
+      const ensureActive = () => {
+        if (controller.signal.aborted) throw new QaError(timedOut ? 504 : 499, timedOut ? 'timeout' : 'cancelled', timedOut ? '回答等待超时，请重试或先查看原文。' : '本次问答已取消。');
+      };
       abortListener = () => controller.abort();
       const interruption = new Promise((_, reject) => {
         controller.signal.addEventListener('abort', () => reject(new QaError(timedOut ? 504 : 499, timedOut ? 'timeout' : 'cancelled', timedOut ? '回答等待超时，请重试或先查看原文。' : '本次问答已取消。')), { once: true });
@@ -138,11 +143,13 @@ export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env =
       if (request.signal.aborted) controller.abort();
       timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
       const task = async () => {
+        ensureActive();
         const corpus = await getCorpus();
-        if (controller.signal.aborted) throw new QaError(499, 'cancelled', '本次问答已取消。');
+        ensureActive();
         // Personal context is only supplied by an authenticated server-side resolver.
         // Never trust a context object supplied in the public request JSON.
         const personal = typeof resolveContext === 'function' ? await resolveContext(request) : null;
+        ensureActive();
         validateQaHistory(history, corpus);
         const conversationTarget = conversationStepFocus(question, history);
         const selected = retrieveEntries(corpus, conversationRetrievalQuestion(question, history));
@@ -168,10 +175,19 @@ export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env =
         }
         const snapshotDate = corpus.source?.snapshotDate ?? '';
         if (!selected.length) return { status: 'insufficient', question, answer: { intro: '书中暂未找到足以回答这个问题的资料。可以换成更具体的生活场景，或查看指南原文。', steps: [], caveat: '' }, sources: [], snapshotDate, model: 'DeepSeek' };
+        const maxOutputTokens = personal?.guide ? 5000 : 1800;
+        const upstreamBody = JSON.stringify({ model: env.DEEPSEEK_MODEL || 'deepseek-flash', thinking: { type: 'disabled' }, response_format: { type: 'json_object' }, max_tokens: maxOutputTokens, messages: [{ role: 'system', content: personal?.guide ? systemPrompt.replace('且仅包含：', '包含：') + personal.instructions : systemPrompt }, { role: 'user', content: JSON.stringify({ question, snapshotDate, entries: selected, ...(history.length ? { conversation: history } : {}), ...(conversationTarget ? { conversationTarget } : {}), ...(personal?.guide ? { personalContext: { guide: personal.guide, confirmedFacts: personal.profileFacts } } : {}) }) }] });
+        ensureActive();
+        if (usageBudget) budgetReservation = usageBudget.reserve({ inputTokens: new TextEncoder().encode(upstreamBody).byteLength + 1024, maxOutputTokens });
+        ensureActive();
+        if (budgetReservation && !usageBudget.markDispatched(budgetReservation.id)) throw new UsageBudgetError(503, 'budget_unavailable', '问答成本账本暂不可用，请稍后重试。');
+        // Cancellation during awaited retrieval/context, or even a synchronous budget hook,
+        // must never start a paid request after the public Promise.race has already ended.
+        ensureActive();
         const upstream = await fetchImpl(ENDPOINT, {
           method: 'POST', signal: controller.signal,
           headers: { 'content-type': 'application/json', authorization: `Bearer ${env.DEEPSEEK_API_KEY}` },
-          body: JSON.stringify({ model: env.DEEPSEEK_MODEL || 'deepseek-flash', thinking: { type: 'disabled' }, response_format: { type: 'json_object' }, max_tokens: personal?.guide ? 5000 : 1800, messages: [{ role: 'system', content: personal?.guide ? systemPrompt.replace('且仅包含：', '包含：') + personal.instructions : systemPrompt }, { role: 'user', content: JSON.stringify({ question, snapshotDate, entries: selected, ...(history.length ? { conversation: history } : {}), ...(conversationTarget ? { conversationTarget } : {}), ...(personal?.guide ? { personalContext: { guide: personal.guide, confirmedFacts: personal.profileFacts } } : {}) }) }] }),
+          body: upstreamBody,
         });
         if (!upstream.ok) {
           if (upstream.status === 429) throw new QaError(429, 'upstream_rate_limited', '问答服务繁忙，请稍后再试。');
@@ -180,6 +196,10 @@ export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env =
         }
         let data;
         try { data = await upstream.json(); } catch { throw invalidAnswer(); }
+        // Reported usage is billable even if answer/draft validation fails. A late response
+        // may replace conservative timeout accounting, but never publishes a cancelled answer.
+        if (budgetReservation) usageBudget.settle(budgetReservation.id, { usage: data?.usage });
+        ensureActive();
         const choice = data?.choices?.[0];
         if (choice?.finish_reason && choice.finish_reason !== 'stop') throw invalidAnswer();
         let parsed;
@@ -193,11 +213,17 @@ export function createQaHandler({ getCorpus, fetchImpl = globalThis.fetch, env =
     } catch (error) {
       if (error instanceof QaHistoryError) return fail(400, 'invalid_history', error.message);
       if (error instanceof QaError) return fail(error.status, error.code, error.message);
+      if (error instanceof UsageBudgetError) return fail(error.status, error.code, error.message);
       if (request.signal.aborted) return fail(499, 'cancelled', '本次问答已取消。');
       return fail(502, 'service_error', '问答服务暂不可用，请重试或查看原文。');
     } finally {
       clearTimeout(timer);
       if (abortListener) request.signal.removeEventListener('abort', abortListener);
+      if (budgetReservation) {
+        // If the DB itself is unavailable, the persisted dispatched reservation remains held
+        // and is conservatively recovered later; never log content or hide the original error.
+        try { usageBudget.fail(budgetReservation.id); } catch {}
+      }
       if (acquired) active -= 1;
     }
   };

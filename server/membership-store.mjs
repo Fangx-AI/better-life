@@ -82,6 +82,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   const all = (sql, ...args) => db.prepare(sql).all(...args);
   const run = (sql, ...args) => db.prepare(sql).run(...args);
   const tx = fn => { db.exec('BEGIN IMMEDIATE'); try { const value = fn(); db.exec('COMMIT'); return value; } catch (error) { db.exec('ROLLBACK'); throw error; } };
+  const assertUserActive = user => { const current = get('SELECT id,auth_kind FROM users WHERE id=?', user?.id); if (!current || current.auth_kind === 'deleted') fail(401, 'login_required', '登录状态已失效，请重新登录。'); return current; };
   const ledger = (user, request, period, action) => run('INSERT INTO quota_ledger(user_id,request_id,period_id,action,created_at) VALUES(?,?,?,?,?)', user, request, period, action, now());
   function rate(key, max, windowMs) {
     const timestamp = now();
@@ -115,7 +116,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   const identityOwner = identity => { const value = identityValue(identity); return get('SELECT users.* FROM account_identities JOIN users ON users.id=account_identities.user_id WHERE channel=? AND identifier=?', value.channel, value.identifier) ?? null; };
   function linkAllowed(user, identity) {
     const current = get('SELECT * FROM users WHERE id=?', user.id), value = identityValue(identity);
-    if (!current || current.auth_kind === 'local-demo') fail(403, 'identity_link_forbidden', '本机体验账号不能绑定正式登录信息，请先退出体验账号。');
+    if (!current || ['local-demo', 'deleted'].includes(current.auth_kind)) fail(403, 'identity_link_forbidden', '当前账号不能绑定正式登录信息，请重新登录。');
     const owner = identityOwner(value);
     if (owner && owner.id !== user.id) fail(409, 'identity_in_use', '这个手机号或邮箱已绑定其他账号，不能合并账号。');
     const existing = get('SELECT identifier FROM account_identities WHERE user_id=? AND channel=?', user.id, value.channel);
@@ -164,7 +165,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
     if (outcome.error) throw outcome.error;
     return outcome;
   }
-  const sessionUser = tokenHash => get('SELECT users.* FROM sessions JOIN users ON users.id=sessions.user_id WHERE sessions.token_hash=? AND sessions.expires_at>?', tokenHash, now()) ?? null;
+  const sessionUser = tokenHash => get("SELECT users.* FROM sessions JOIN users ON users.id=sessions.user_id WHERE sessions.token_hash=? AND sessions.expires_at>? AND users.auth_kind!='deleted'", tokenHash, now()) ?? null;
   function localDemoUser(tokenHash) {
     return tx(() => {
       rate('local-demo:session', 5, 60000);
@@ -199,6 +200,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   }
   function reserve(user, requestId, questionHash) {
     return tx(() => {
+      assertUserActive(user);
       const previous = get('SELECT * FROM generations WHERE user_id=? AND request_id=?', user.id, requestId);
       if (previous) {
         if (previous.question_hash !== questionHash) fail(409, 'request_id_conflict', '这个请求编号已用于其他问题，请重新提交。');
@@ -222,6 +224,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   }
   function createOrder(user, plan, requestId, merchantId) {
     return tx(() => {
+      assertUserActive(user);
       if (typeof merchantId !== 'string' || !/^[A-Za-z0-9_*-]{1,128}$/.test(merchantId)) fail(503, 'payment_merchant_unbound', '收费订单必须绑定已配置的商户。');
       const existing = get('SELECT * FROM orders WHERE user_id=? AND request_id=?', user.id, requestId);
       if (existing) {
@@ -284,6 +287,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   }
   function saveAnswer(user, cipher) {
     return tx(() => {
+      assertUserActive(user);
       const max = active(user) ? 200 : 10;
       if (get('SELECT COUNT(*) AS count FROM saved_answers WHERE user_id=?', user.id).count >= max) fail(409, 'save_limit', `已达到 ${max} 份云端保存上限，删除旧记录后再保存。`);
       const id = randomUUID(); run('INSERT INTO saved_answers(id,user_id,result_cipher,created_at) VALUES(?,?,?,?)', id, user.id, cipher, now());
@@ -298,6 +302,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   const guideLimit = user => membershipPlan(active(user)?.plan_id ?? 'free').guideLimit;
   function createGuide(user, cipher) {
     return tx(() => {
+      assertUserActive(user);
       if (get('SELECT COUNT(*) AS count FROM guides WHERE user_id=?', user.id).count >= guideLimit(user)) fail(409, 'guide_limit', '私人指南已达到本套餐容量，请整理旧档案或查看会员套餐。');
       const id = randomUUID(), timestamp = now();
       run('INSERT INTO guides(id,user_id,content_cipher,revision,created_at,updated_at) VALUES(?,?,?,1,?,?)', id, user.id, cipher, timestamp, timestamp);
@@ -307,6 +312,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   }
   function updateGuide(user, id, revision, cipher) {
     return tx(() => {
+      assertUserActive(user);
       const guide = ownedGuide(user, id);
       if (guide.revision !== revision) fail(409, 'revision_conflict', '这份指南已有新修改，请刷新后合并你的内容。');
       const timestamp = now();
@@ -326,6 +332,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   }
   function updateProfile(user, revision, cipher) {
     return tx(() => {
+      assertUserActive(user);
       const profile = get('SELECT * FROM profiles WHERE user_id=?', user.id);
       if ((profile?.revision ?? 0) !== revision) fail(409, 'revision_conflict', '个人情况已有新修改，请刷新后再保存。');
       run('INSERT INTO profiles(user_id,facts_cipher,revision,updated_at) VALUES(?,?,1,?) ON CONFLICT(user_id) DO UPDATE SET facts_cipher=excluded.facts_cipher,revision=profiles.revision+1,updated_at=excluded.updated_at', user.id, cipher, now());

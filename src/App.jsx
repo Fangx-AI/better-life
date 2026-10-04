@@ -114,6 +114,6 @@ export function App() {
         </div></div>
       </section>
     </main>
-    <footer className="page-width"><div><b>BETTER LIFE</b><p>学校没教，生活会考。好用，就留个入口。</p></div><NavbarButton href={repo} className="outline-button" target="_blank" rel="noopener noreferrer">GitHub 上看项目 <IconExternalLink size={17}/></NavbarButton><a href={`${base}content-source.html`} className="source-link">内容来源</a></footer>
+    <footer className="page-width"><div><b>BETTER LIFE</b><p>学校没教，生活会考。好用，就留个入口。</p></div><NavbarButton href={repo} className="outline-button" target="_blank" rel="noopener noreferrer">GitHub 上看项目 <IconExternalLink size={17}/></NavbarButton><nav className="footer-links" aria-label="网站说明"><a href={`${base}content-source.html`} className="source-link">内容来源</a><a href={`${base}?view=privacy`} className="source-link">隐私说明</a><a href={`${base}?view=terms`} className="source-link">服务说明</a></nav></footer>
   </MotionConfig>;
 }

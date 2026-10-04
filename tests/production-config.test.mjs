@@ -12,7 +12,9 @@ import { MEMBERSHIP_DATABASE_APPLICATION_ID, assertProductionStorage } from '../
 
 const good = () => ({ NODE_ENV: 'production', MEMBERSHIP_AUTH_SECRET: randomBytes(48).toString('base64url'),
   MEMBERSHIP_APP_ORIGIN: 'https://better-life.example.test', MEMBERSHIP_DB_PATH: process.platform === 'win32' ? 'C:\\private-better-life\\membership.sqlite' : '/var/lib/better-life/membership.sqlite',
-  MEMBERSHIP_ENFORCE: 'true', MEMBERSHIP_LOCAL_DEMO: 'false', QA_ALLOWED_ORIGINS: 'https://better-life.example.test', DEEPSEEK_API_KEY: 'fixture-model-key' });
+  MEMBERSHIP_ENFORCE: 'true', MEMBERSHIP_LOCAL_DEMO: 'false', QA_ALLOWED_ORIGINS: 'https://better-life.example.test', DEEPSEEK_API_KEY: 'fixture-model-key',
+  // Synthetic arithmetic fixture rates, not verified/live vendor pricing.
+  QA_BUDGET_DAILY_CNY: '1', QA_BUDGET_MONTHLY_CNY: '10', QA_PRICE_INPUT_CNY_PER_MILLION: '1', QA_PRICE_OUTPUT_CNY_PER_MILLION: '2' });
 test('production configuration: HTTPS, independent explicit DB, secret and metering are required before startup', () => {
   assert.deepEqual(productionProblems(good()), []);
   for (const [key, value] of Object.entries({ MEMBERSHIP_AUTH_SECRET: '', MEMBERSHIP_APP_ORIGIN: 'http://public.test', MEMBERSHIP_DB_PATH: ':memory:', MEMBERSHIP_ENFORCE: 'false', MEMBERSHIP_LOCAL_DEMO: 'true', QA_ALLOWED_ORIGINS: 'https://fangx-ai.github.io', DEEPSEEK_API_KEY: '' })) {
@@ -26,6 +28,18 @@ test('production configuration: credentials/path/origin values are never exposed
   const problems = JSON.stringify(productionProblems(env));
   for (const value of [env.MEMBERSHIP_AUTH_SECRET, env.MEMBERSHIP_APP_ORIGIN, env.MEMBERSHIP_DB_PATH, env.DEEPSEEK_API_KEY]) assert.ok(!problems.includes(value));
   try { assertProductionConfig(env); } catch (error) { assert.ok(!error.message.includes('private-user')); assert.ok(!error.message.includes('relative-private')); }
+});
+
+test('production configuration: explicit complete positive daily/monthly cost limits and prices are required', () => {
+  const fields = ['QA_BUDGET_DAILY_CNY', 'QA_BUDGET_MONTHLY_CNY', 'QA_PRICE_INPUT_CNY_PER_MILLION', 'QA_PRICE_OUTPUT_CNY_PER_MILLION'];
+  for (const field of fields) for (const value of ['', '0', '-1', '1e3', '1.1234567', 'private-budget-placeholder']) {
+    const env = { ...good(), [field]: value }, problems = productionProblems(env);
+    assert.ok(problems.includes(field), field); assert.throws(() => assertProductionConfig(env), /生产配置未完成/);
+    if (value === 'private-budget-placeholder') assert.equal(JSON.stringify(problems).includes(value), false);
+  }
+  assert.ok(productionProblems({ ...good(), QA_BUDGET_MONTHLY_CNY: '0.5' }).includes('QA_BUDGET_MONTHLY_CNY'));
+  const absent = good(); for (const field of fields) delete absent[field];
+  for (const field of fields) assert.ok(productionProblems(absent).includes(field));
 });
 test('production configuration: static/release/default/source-app DB locations and unsafe origins are rejected', () => {
   for (const value of [resolve('output/private/membership.sqlite'), resolve('dist/client/users.db'), 'membership.sqlite', ':memory:']) assert.ok(productionProblems({ ...good(), MEMBERSHIP_DB_PATH: value }).includes('MEMBERSHIP_DB_PATH'));

@@ -51,7 +51,9 @@ export function validateMembershipStatus(data) {
   if (plans.length !== 3) throw new Error('套餐信息暂时无法读取，请稍后重试。');
   const emailLoginAvailable = data.emailLoginAvailable ?? data.loginAvailable;
   const phoneLoginAvailable = data.phoneLoginAvailable === true;
-  return { ...data, plans, emailLoginAvailable, phoneLoginAvailable, loginAvailable: emailLoginAvailable || phoneLoginAvailable, localDemoAvailable: data.localDemoAvailable === true, available: true, preview: false };
+  let supportUrl = null;
+  try { const url = new URL(data.supportUrl); if (url.protocol === 'https:' && !url.username && !url.password) supportUrl = url.href; } catch {}
+  return { ...data, plans, emailLoginAvailable, phoneLoginAvailable, loginAvailable: emailLoginAvailable || phoneLoginAvailable, localDemoAvailable: data.localDemoAvailable === true, supportUrl, refundRequestsAvailable: data.refundRequestsAvailable === true, available: true, preview: false };
 }
 
 export function validateMember(data) {

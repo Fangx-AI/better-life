@@ -28,6 +28,6 @@ export function readAppView(location) {
   const view = new URLSearchParams(location.search).get('view');
   // Private guide/checkout URLs can also contain old hashes or query filters.
   // Never redirect these away from their intended account-owned page.
-  if (view === 'pricing' || view === 'guides') return view;
+  if (['pricing', 'guides', 'operations', 'privacy', 'terms'].includes(view)) return view;
   return readGuideLocation(location).browsing ? 'library' : 'home';
 }

@@ -103,3 +103,19 @@
 - Checklist：实际查看官方登录 ✓；沿用既有免费组件/品牌并补层次 ✓；不恢复闲话/新增认证入口 ✓；修复 P2 后重建、重拍和同比 ✓；保持 4190 运行 ✓。没有本轮剩余 P0/P1/P2；不包含真实收码、OAuth 接入、付款、公网部署或真实 iOS/Android 浏览器验收。
 
 final result: passed
+
+## 2026-10-04：正式运营 Goal 的代码与隔离验收
+
+- 范围：新增独立运营后台、账号退款申请/逻辑注销、日月模型预算、匿名转化与可信付款补偿、隐私/服务说明及 SEO。沿用既有白底珊瑚品牌和 Aceternity Input / Label / NavbarButton；原书、首屏、阅读目录和既有登录视觉未重设计。
+- Windows 与授权 Linux 独立构建副本均执行 `npm run check`，各 **397/397** 通过；原文 650 条、不合格 0；797 处引用通过。Linux Node 22.22.3，锁定依赖 `npm ci --ignore-scripts --no-audit --no-fund`，不升级依赖、不访问真实 OTP/模型/支付。
+- 运营后台 Playwright **14/14**：1440×1000、390×844、320×720；覆盖默认关闭、独立 Bearer、只读列表与分页、revision 冲突、退款状态边界、401 清空、退出/刷新不持久保存凭据、预算/匿名事件及无横溢。结果：`output/playwright/goal-operations-results.json`。运营 token 为合成值，没有真实付款或商户调用。
+- 用户账号 Playwright **14/14**：1440×1000、390×844、320×720；覆盖退款原因枚举/幂等、已付入口与未开放状态、注销默认折叠、权益/未核清订单/工单阻塞、正常 OTP 重新认证、精确确认、DELETE 清合成 Cookie/关窗刷新、401 回正常登录。结果：`output/playwright/goal-account-results.json`。未知接口及全部外网阻断；正文 pageerror/非预期 console error/非预期网络请求均为 0，两个主动模拟 401 单独记录，不当作真实故障。
+- 首轮账号脚本未放行首页两份公开 JSON，最后网络断言失败；只修静态白名单并精确登记预期 mock 401，未为测试假象更改产品。复跑 14/14，真实业务请求仍全 mock。
+- 实际查看的最终视觉截图：`C:/Users/PC/Documents/Codex/2026-10-03/new-chat/outputs/better-life/output/playwright/goal-operations-overview-1440.png`、`goal-operations-refunds-390.png`、`goal-account-settings-390.png`；另有 320/390 的退款与注销展开实拍。手机设置窗口 390px 视口为 370px、320px 为 300px；输入/选择器均至少 16px，内容无横向溢出。截图为原生 1x；手机 full-page 图在查看工具中缩小显示，未以缩放图像代替 DOM 测量。后台图中的跳转入口因键盘焦点可见，是保留的无障碍控件，不删去制造“干净截图”。
+- 表面复核：既有中文字体/明确字级保留；卡片与表单间距一致；珊瑚动作/白底及可读文本保持；复用真实 B 品牌和既有图标，不新造占位图片；退款/注销只留动作、状态及必要边界，不声称审核即到账或删除即抹掉金融/备份。
+- 安全回归：撤销/旋转/注销后的迟到私人写入被拒绝；旧会话不能绑定新身份再绕过原身份验证；failed/expired 但未经平台核清的订单也阻塞注销；付款统计失败保持金融 ACK，持久有界扫描按真实 paid_at 补计，不制造付款事实。
+- Linux 另外启动了一次临时 **development / local-demo / 随机回环端口 / 空合成数据库** 的同源应用，实际检查健康、静态页面、私人无索引、关闭的后台与私文件 403，再关闭实例。不是生产启动、真实登录或公网发布。
+- 已在独立目录生成服务身份、会话/备份/运营密钥，传输既有本项目模型与验证码 provider 配置（只经 SSH stdin，不在聊天/命令行/日志输出秘密），创建本项目空库，完成首次加密备份和恢复检查。结果 `privateContentDecryption=no-encrypted-content`，不代表真实用户私文或灾备恢复验收。未安装 systemd/Nginx/timer，未修改 current 或其他项目；前后现有网站健康口均 204。
+- 新主站真实域名/DNS/TLS、本项目商户及真实收码/付款/退款、生产激活、定时/离机备份恢复和负责人告警仍待完成；源码 dry-stage 与临时 Linux PASS 不替代这些事实。正式 Goal 保持 active。4190 已重启到最新代码；全 mock QA 浏览器已关闭，不留模拟付款/注销会话给用户误认。
+
+本轮代码与隔离验收：passed。正式生产 Goal：尚未全部完成。
