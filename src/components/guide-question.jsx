@@ -14,6 +14,7 @@ import { QaNotice } from './qa-notice';
 import { useMembership } from './membership/membership-context.jsx';
 import { createQaRequestGate, previewQaStep } from '../lib/qa-request-gate.mjs';
 import { sendConversationQuestion } from '../lib/qa-conversation-request.mjs';
+import { guideLocationHref } from '../lib/guide-location.mjs';
 import '../qa-polish.css';
 
 const placeholders = ['直接问：房东不退押金，我该怎么办？', '直接问：准备离职，哪些材料要先留下？', '直接问：最近总是睡不着，怎么调整？'];
@@ -131,7 +132,7 @@ export function GuideQuestion({ corpus, loadError, renderSource, onResult, quest
     {canViewConversation && (busy || visibleTurns.length > 0 || error) && <section className="qa-panel qa-conversation" ref={panel} aria-labelledby="qa-title">
       <div className="qa-heading"><h2 id="qa-title"><IconMessageCircle size={20} /> 当前对话</h2><NavbarButton as="button" type="button" variant="secondary" onClick={newConversation}><IconPlus size={17} /> 新对话</NavbarButton></div>
       <div className="qa-transcript">{visibleTurns.map((turn, index) => <article className="qa-conversation-turn" key={turn.id} aria-label={`第 ${index + 1} 轮问答`}><h3 className="qa-user-question">{turn.question}</h3><ConversationAnswer turn={turn} renderSource={renderSource} /></article>)}</div>
-      {(busy || error) && <div className="qa-pending" ref={pendingPanel}><h3 className="qa-user-question">{question}</h3>{busy && <div className="qa-progress" role="status"><p>正在结合原文整理……</p><NavbarButton as="button" type="button" variant="secondary" onClick={stop}><IconX size={17} /> 停止</NavbarButton></div>}{error && <div className="qa-error" role="alert"><p>{error}</p><div className="qa-error-actions"><NavbarButton as="button" type="button" className="outline-button" onClick={() => ask(question)}><IconRefresh size={18} /> 再试一次</NavbarButton><NavbarButton href="#library" variant="secondary">先读指南</NavbarButton></div></div>}</div>}
+      {(busy || error) && <div className="qa-pending" ref={pendingPanel}><h3 className="qa-user-question">{question}</h3>{busy && <div className="qa-progress" role="status"><p>正在结合原文整理……</p><NavbarButton as="button" type="button" variant="secondary" onClick={stop}><IconX size={17} /> 停止</NavbarButton></div>}{error && <div className="qa-error" role="alert"><p>{error}</p><div className="qa-error-actions"><NavbarButton as="button" type="button" className="outline-button" onClick={() => ask(question)}><IconRefresh size={18} /> 再试一次</NavbarButton><NavbarButton href={guideLocationHref(import.meta.env.BASE_URL, {})} variant="secondary">先读指南</NavbarButton></div></div>}</div>}
       {visibleTurns.length > 0 && <form className="qa-followup" aria-label="继续这次对话" onSubmit={event => { event.preventDefault(); if (!busy && followup.trim()) ask(followup); }}>
         <Label htmlFor={followupId}>接着问</Label><div className="qa-followup-controls"><Input id={followupId} aria-label="继续提问" value={followup} placeholder="例如：第二步具体怎么做？" maxLength={500} autoComplete="off" disabled={busy || !corpus || loadError} onChange={event => setFollowup(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && event.nativeEvent.isComposing) event.preventDefault(); }} /><NavbarButton as="button" type="submit" className="coral-button" disabled={busy || !followup.trim() || !corpus || loadError}>发送<IconArrowRight size={18} /></NavbarButton></div><p>有用的回答，可以收进自己的指南。</p>
       </form>}

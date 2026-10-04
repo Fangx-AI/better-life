@@ -6,13 +6,15 @@ import { MembershipProvider } from './components/membership/membership-context.j
 import { AccountDialog } from './components/membership/account-dialog.jsx';
 import './membership.css';
 import { RouteBoundary } from './components/route-boundary.jsx';
+import { readAppView } from './lib/guide-location.mjs';
 
 const PricingPage = React.lazy(() => import('./components/membership/pricing-page.jsx').then(module => ({ default: module.PricingPage })));
 const PersonalGuidePage = React.lazy(() => import('./components/personal-guide/index.jsx').then(module => ({ default: module.PersonalGuidePage })));
+const LibraryPage = React.lazy(() => import('./components/library-page.jsx').then(module => ({ default: module.LibraryPage })));
 
-const view = new URLSearchParams(window.location.search).get('view');
+const view = readAppView(window.location);
 
-const routeLabel = view === 'pricing' ? '会员与价格' : '我的人生指南';
+const routeLabel = view === 'library' ? '人生指南' : view === 'pricing' ? '会员与价格' : '我的人生指南';
 
 function RouteLoading() {
   return <main className="route-loading member-route-loading" aria-busy="true">
@@ -31,7 +33,7 @@ root.render(
   <React.StrictMode>
     <MembershipProvider>
       <RouteBoundary><React.Suspense fallback={<RouteLoading />}>
-        {view === 'pricing' ? <PricingPage /> : view === 'guides' ? <PersonalGuidePage /> : <App />}
+        {view === 'pricing' ? <PricingPage /> : view === 'guides' ? <PersonalGuidePage /> : view === 'library' ? <LibraryPage /> : <App />}
       </React.Suspense></RouteBoundary>
       <AccountDialog />
     </MembershipProvider>

@@ -35,6 +35,7 @@ export const BentoGridItem = ({
   header?: React.ReactNode;
   icon?: React.ReactNode;
   as?: React.ElementType;
+  href?: string;
   onClick?: () => void;
   type?: string;
   "aria-label"?: string;

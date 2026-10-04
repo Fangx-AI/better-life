@@ -36,3 +36,10 @@
 - 图谱绘制与 Canvas 尺寸观察分离，拖动不重复创建观察器。点选范围与可见节点匹配；换主题或选中条目时重新定位，支持上一条/下一条、全部相关建议和失败重载。
 - 原文弹窗增加独立收藏提示、规范分享链接及复制失败时的可选链接字段；浏览器返回、前进和直接链接均能恢复对应原文。
 - 小屏图谱将预览卡与画布分行，避免遮住节点。所有操作继续使用既有 Aceternity Tabs、NavbarButton 和 Expandable Card，加载失败操作也沿用 NavbarButton。
+
+## 独立阅读页与章节目录
+
+- 首页保留提问、场景入口、知识图谱和问答示例，不再混排完整条款检索列表；查看指南、场景建议和原文引用统一进入 `?view=library` 阅读页。旧章节参数、`#library` 与条目分享链接仍兼容。
+- 左侧章节目录基于官方公开 [Sidebar](https://ui.aceternity.com/components/sidebar) registry（原始快照 `docs/aceternity/sidebar.json`），适配已有白底与珊瑚品牌、章节名称、条目计数、当前章节状态和小屏目录入口；不另引 UI 套件。
+- 搜索与筛选继续使用既有 Input、Label 和 Tabs；条款列表及原文展开沿用 Expandable Card / Tracing Beam，按钮沿用 NavbarButton。适配的是阅读导航与响应式布局，不改写原书内容、出处或用户收藏数据。
+- 个人指南中的原文依据与问答失败后的“先读指南”采用统一导航 helper，确保 root 路径和 GitHub Pages 子路径均进入独立阅读页；个人指南的原文依据仍在新标签打开，避免打断未保存草稿。

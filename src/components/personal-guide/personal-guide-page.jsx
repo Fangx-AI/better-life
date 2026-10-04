@@ -11,6 +11,7 @@ import { loadGuides, savePersonalGuide, exportPersonalGuide, validateGuide, isCu
 import { validateQaResponse } from '../../lib/qa-response.mjs';
 import { readerText } from '../../lib/reader-text.mjs';
 import { guideExcerpt } from '../../lib/guide-excerpt.mjs';
+import { entryLocationHref, guideLocationHref } from '../../lib/guide-location.mjs';
 import { QaNotice } from '../qa-notice';
 import { createGuideNavigationGuard, validatePersonalGuideCorpus, pendingGuideMessage } from '../../lib/personal-guide-navigation.mjs';
 
@@ -43,7 +44,7 @@ function Disclosure({ title, children, className = '' }) {
 
 function SourceList({ sourceIds, corpus, sourceSnapshots = {}, snapshotDate }) {
   const entries = corpus?.chapters?.flatMap(chapter => chapter.entries.map(entry => ({ ...entry, chapterTitle: chapter.title, file: chapter.file }))) || [];
-  return <Disclosure title={`原文依据${sourceIds.length ? ` · ${sourceIds.length} 条` : ''}`}><p className="personal-small-note">这些是书中依据，不是对你个人情况的独立核验。{(snapshotDate || corpus?.source?.snapshotDate) && <> 原文快照 {snapshotDate || corpus.source.snapshotDate}。</>}</p>{sourceIds.length ? <ul className="personal-source-list">{sourceIds.map(id => { const entry = entries.find(item => item.id === id), snapshot = sourceSnapshots[id]; return <li key={id}><IconBook2 size={16}/><span><a href={entry ? `${base}?chapter=${entry.chapter}#entry-${entry.id}` : `${base}#library`} target="_blank" rel="noopener noreferrer">{entry ? `${entry.chapterTitle} · ${readerText(snapshot?.title || entry.title)}` : snapshot?.title ? readerText(snapshot.title) : '打开指南核对原文'}</a>{snapshot?.snapshotDate && <small className="personal-source-date">关联时的原文快照：{snapshot.snapshotDate}</small>}</span></li>; })}</ul> : <p className="personal-small-note">这篇是你自己的笔记，还没有关联书中条目。</p>}</Disclosure>;
+  return <Disclosure title={`原文依据${sourceIds.length ? ` · ${sourceIds.length} 条` : ''}`}><p className="personal-small-note">这些是书中依据，不是对你个人情况的独立核验。{(snapshotDate || corpus?.source?.snapshotDate) && <> 原文快照 {snapshotDate || corpus.source.snapshotDate}。</>}</p>{sourceIds.length ? <ul className="personal-source-list">{sourceIds.map(id => { const entry = entries.find(item => item.id === id), snapshot = sourceSnapshots[id]; return <li key={id}><IconBook2 size={16}/><span><a href={entry ? entryLocationHref(base, entry) : guideLocationHref(base, {})} target="_blank" rel="noopener noreferrer">{entry ? `${entry.chapterTitle} · ${readerText(snapshot?.title || entry.title)}` : snapshot?.title ? readerText(snapshot.title) : '打开指南核对原文'}</a>{snapshot?.snapshotDate && <small className="personal-source-date">关联时的原文快照：{snapshot.snapshotDate}</small>}</span></li>; })}</ul> : <p className="personal-small-note">这篇是你自己的笔记，还没有关联书中条目。</p>}</Disclosure>;
 }
 
 function ProfilePanel({ profile, onSaved, onPendingChange }) {

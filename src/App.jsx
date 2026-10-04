@@ -1,61 +1,119 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { MotionConfig } from 'motion/react';
-import { IconArrowRight, IconDownload, IconFileTypePdf, IconChevronRight, IconBriefcase, IconHome, IconWallet, IconHeart, IconExternalLink, IconBookmark, IconCheck, IconSearch, IconMenu2, IconX, IconBook2 } from '@tabler/icons-react';
+import { IconArrowRight, IconDownload, IconFileTypePdf, IconChevronRight, IconExternalLink, IconMenu2, IconX, IconBook2 } from '@tabler/icons-react';
 import { Navbar, NavBody, NavItems, MobileNav, MobileNavHeader, MobileNavMenu, NavbarButton } from './components/ui/resizable-navbar';
 import { GuideQuestion } from './components/guide-question';
 import { KnowledgeMap } from './components/knowledge-map';
 import { AnswerShowcase } from './components/answer-showcase';
 import { BentoGrid, BentoGridItem } from './components/ui/bento-grid';
-import { ExpandableCards } from './components/ui/expandable-card';
-import { Input } from './components/ui/input';
-import { Label } from './components/ui/label';
-import { Tabs } from './components/ui/tabs';
-import { matchesGuideEntry } from './lib/guide-filters.mjs';
-import { readGuideLocation, guideLocationHref, entryLocationHref } from './lib/guide-location.mjs';
+import { guideLocationHref, entryLocationHref } from './lib/guide-location.mjs';
 import { ReaderContent } from './components/reader-content';
-import { readerText } from './lib/reader-text.mjs';
 import { useMembership } from './components/membership/membership-context.jsx';
-const base=import.meta.env.BASE_URL,media=name=>`${base}media/${name}.webp`,repo='https://github.com/Fangx-AI/better-life',pdf='https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf';
-const blank={q:'',chapter:'',free:false,saved:false};
-function paramsState(){return readGuideLocation(location).filters;}
-function initialSaved(){try{const a=JSON.parse(localStorage.getItem('better-life:saved')||'[]');return new Set(Array.isArray(a)?a.filter(x=>typeof x==='string'):[]);}catch{return new Set();}}
-const scenes=[{chapter:19,title:'工作与离职',description:'更稳的工作，更好的选择',image:'scene-work'},{chapter:5,title:'少花冤枉钱',description:'看清套路，把钱花在刀刃上',image:'scene-money'},{chapter:15,title:'租房与买房',description:'住得安心，生活才踏实',image:'scene-home'}];
-const icons={19:<IconBriefcase size={26}/>,15:<IconHome size={26}/>,5:<IconWallet size={26}/>};
-function Brand(){return <a className="brand" href={base} aria-label="Better Life 首页"><img src={media('brand')} width="40" height="40" alt=""/><span><b>BETTER LIFE</b><small>高性价比人生指南</small></span></a>;}
-export function App(){
+
+const base = import.meta.env.BASE_URL;
+const media = name => `${base}media/${name}.webp`;
+const repo = 'https://github.com/Fangx-AI/better-life';
+const pdf = 'https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf';
+const libraryHref = guideLocationHref(base);
+const scenes = [
+  { chapter: 19, title: '工作与离职', description: '更稳的工作，更好的选择', image: 'scene-work' },
+  { chapter: 5, title: '少花冤枉钱', description: '看清套路，把钱花在刀刃上', image: 'scene-money' },
+  { chapter: 15, title: '租房与买房', description: '住得安心，生活才踏实', image: 'scene-home' },
+];
+
+function initialSaved() {
+  try {
+    const ids = JSON.parse(localStorage.getItem('better-life:saved') || '[]');
+    return new Set(Array.isArray(ids) ? ids.filter(id => typeof id === 'string') : []);
+  } catch { return new Set(); }
+}
+
+function Brand() {
+  return <a className="brand" href={base} aria-label="Better Life 首页">
+    <img src={media('brand')} width="40" height="40" alt=""/>
+    <span><b>BETTER LIFE</b><small>高性价比人生指南</small></span>
+  </a>;
+}
+
+export function App() {
   const { openAccount, me } = useMembership();
-  const [highlighted,setHighlighted]=useState([]),[questionRequest,setQuestionRequest]=useState(null);
-  const [state,setState]=useState(paramsState),[saved,setSaved]=useState(initialSaved),[corpus,setCorpus]=useState(null),[error,setError]=useState(false),[reload,setReload]=useState(0),[limit,setLimit]=useState(12),[active,setActive]=useState(null),[browsing,setBrowsing]=useState(()=>readGuideLocation(location).browsing),[menu,setMenu]=useState(false);
-  const readerReturn=useRef(null);
-  const entries=useMemo(()=>corpus?.chapters.flatMap(c=>c.entries)||[],[corpus]);
-  const scrollLibrary=()=>requestAnimationFrame(()=>document.getElementById('library')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}));
-  const navigate=(patch,scroll=true)=>{const next={...state,...patch};setState(next);setLimit(12);setBrowsing(true);setActive(null);readerReturn.current=null;if(scroll){const href=guideLocationHref(location.pathname,next);if(href!==location.pathname+location.search+location.hash)history.pushState(null,'',href);scrollLibrary();}};
-  useEffect(()=>{const controller=new AbortController();setError(false);fetch(`${base}content.json`,{signal:controller.signal}).then(res=>{if(!res.ok)throw Error(res.status);return res.json();}).then(setCorpus).catch(e=>{if(e.name!=='AbortError')setError(true);});return ()=>controller.abort();},[reload]);
-  useEffect(()=>{
-    if(!corpus)return;
-    const sync=()=>{const route=readGuideLocation(location,corpus);setState(route.filters);setBrowsing(route.browsing);setActive(route.entry);setLimit(route.entry?Math.max(12,route.entry.number):12);readerReturn.current=route.entry?(history.state?.readerReturn||guideLocationHref(location.pathname,route.filters)):null;if(route.browsing)scrollLibrary();};
-    sync();window.addEventListener('popstate',sync);window.addEventListener('hashchange',sync);
-    return()=>{window.removeEventListener('popstate',sync);window.removeEventListener('hashchange',sync);};
-  },[corpus]);
-  useEffect(()=>{if(!browsing||!corpus||active||location.hash.startsWith('#entry-'))return;history.replaceState(null,'',guideLocationHref(location.pathname,state,location.hash));},[state,browsing,active,corpus]);
-  const found=useMemo(()=>entries.filter(e=>matchesGuideEntry(e,state,saved)),[entries,state,saved]);
-  const featured=useMemo(()=>['19-8','15-1'].map(id=>entries.find(e=>e.id===id)).filter(Boolean).map((e,i)=>({...e,displayTitle:i===0?'准备离职，哪些材料先留下？':'第一次租房，怎样避开常见的坑？',displayDescription:i===0?'工资条、考勤、合同、社保记录和聊天记录，离职前先存好。':'从押金到退还时间，签字前把关键约定写进合同。'})),[entries]);
-  const cards=(browsing?found.slice(0,limit):featured).map(e=>({...e,summary:readerText(e.summary),icon:icons[e.chapter]||<IconBookmark size={26}/>}));
-  const openEntry=e=>{readerReturn.current=location.pathname+location.search+location.hash;history.pushState({readerReturn:readerReturn.current},'',entryLocationHref(location.pathname,e));setActive(e);};
-  const close=useCallback(()=>{const href=readerReturn.current||guideLocationHref(location.pathname,readGuideLocation(location,corpus).filters);history.replaceState(null,'',href);const route=readGuideLocation(location,corpus);setActive(null);setState(route.filters);setBrowsing(route.browsing);readerReturn.current=null;},[corpus]);
-  const toggleSaved=e=>{const next=new Set(saved);if(next.has(e.id))next.delete(e.id);else next.add(e.id);setSaved(next);try{localStorage.setItem('better-life:saved',JSON.stringify([...next]));return next.has(e.id)?'已收藏':'已取消收藏';}catch{return '本次已保存；浏览器不允许持久保存，刷新后可能丢失。';}};
-  const reset=()=>navigate({...blank});
-  const renderContent=e=><ReaderContent key={e.id} entry={e} corpus={corpus} saved={saved} onToggleSaved={toggleSaved}/>;
-  const quickValue=state.saved?'saved':state.free?'free':'all';
-  return <MotionConfig reducedMotion="user"><a className="skip-link" href="#library" onClick={()=>setBrowsing(true)}>跳到指南检索</a><Navbar className="site-navbar fixed top-0"><NavBody className="desktop-nav"><Brand/><NavItems className="nav-items" items={[{name:'按场景找',link:'#scenes'},{name:'查看指南',link:'#library'},{name:'我的指南',link:`${base}?view=guides`},{name:'会员方案',link:`${base}?view=pricing`}]}/><NavbarButton as="button" type="button" className="outline-button nav-account" onClick={openAccount}>{me?.user?'我的账户':'登录'}</NavbarButton><NavbarButton href={pdf} className="outline-button nav-download"><IconDownload size={18}/> 下载 PDF</NavbarButton></NavBody><MobileNav><MobileNavHeader><Brand/><NavbarButton as="button" type="button" className="icon-button" aria-label={menu?'关闭菜单':'打开菜单'} aria-expanded={menu} aria-controls="mobile-menu" onClick={()=>setMenu(!menu)}>{menu?<IconX size={23}/>:<IconMenu2 size={23}/>}</NavbarButton></MobileNavHeader><MobileNavMenu isOpen={menu} onClose={()=>setMenu(false)}><nav id="mobile-menu" aria-label="手机导航"><NavbarButton href="#scenes" variant="secondary" onClick={()=>setMenu(false)}>按场景找</NavbarButton><NavbarButton href="#library" variant="secondary" onClick={()=>{setMenu(false);setBrowsing(true);}}>查看指南</NavbarButton><NavbarButton href={`${base}?view=guides`} variant="secondary">我的指南</NavbarButton><NavbarButton href={`${base}?view=pricing`} variant="secondary">会员方案</NavbarButton><NavbarButton as="button" type="button" variant="secondary" onClick={()=>{setMenu(false);openAccount();}}>{me?.user?'我的账户':'登录'}</NavbarButton><NavbarButton href={pdf} className="outline-button"><IconDownload size={18}/> 下载 PDF</NavbarButton></nav></MobileNavMenu></MobileNav></Navbar>
-  <main><div className="landing-background" aria-hidden="true" style={{backgroundImage:`url(${media('hero-background')})`}}/><section className="hero" aria-labelledby="hero-title"><p className="sr-only hero-tagline">学校没教，生活会考。</p><h1 id="hero-title">高性价比<span>人生指南</span></h1><p className="hero-subtitle">省钱、避坑、少走弯路。</p><GuideQuestion corpus={corpus} loadError={error} renderSource={renderContent} onResult={setHighlighted} questionRequest={questionRequest}/><div className="hero-meta"><span><b>{corpus?.counts.entries||650}</b> 条建议 <span aria-hidden="true">·</span> <b>{corpus?.counts.chapters||34}</b> 个主题</span><NavbarButton href={pdf} variant="secondary" className="meta-pdf"><IconFileTypePdf size={25}/> 下载 PDF</NavbarButton></div></section>
-  <section id="scenes" className="scene-section page-width" aria-label="按场景查指南"><BentoGrid className="scene-grid">{scenes.map(s=><BentoGridItem key={s.chapter} as="button" type="button" className="scene-card" aria-label={`查看${s.title}`} onClick={()=>navigate({...blank,chapter:String(s.chapter)})} header={<><img src={media(s.image)} width="1245" height="624" alt=""/><span className="scene-shade"/></>} title={<h2>{s.title}</h2>} description={<><p>{s.description}</p><span className="scene-next"><IconChevronRight size={18}/></span></>}/>)}</BentoGrid></section>
-  <KnowledgeMap corpus={corpus} onOpen={openEntry} highlighted={highlighted}/>
-  <AnswerShowcase corpus={corpus} onOpen={openEntry} onAsk={text=>setQuestionRequest({text,nonce:Date.now()})}/>
-  <div className="browse-invitation page-width"><NavbarButton as="button" className="outline-button" onClick={()=>navigate({...blank})}>查看全部 650 条建议 <IconArrowRight size={18}/></NavbarButton></div>
-  <section id="library" className="library page-width" hidden={!browsing&&!error} aria-labelledby="library-title"><img className="reading-note" src={media('reading-note')} width="280" height="103" alt=""/><div className="library-heading"><p>从实际问题出发</p><h2 id="library-title">先找到你正在遇到的问题</h2><p className="library-intro">打开具体场景，获取实用建议。</p></div>{error?<div className="empty-state" role="alert"><h3>指南暂时没加载成功</h3><p>请重试，或者直接到 GitHub 阅读原文。</p><NavbarButton as="button" onClick={()=>setReload(n=>n+1)} className="coral-button">重新加载</NavbarButton><NavbarButton href={`${repo}/tree/main/library/book`} className="outline-button">直接读原文</NavbarButton></div>:!corpus?<p className="loading-state" role="status">正在加载指南……</p>:<>
-  {browsing&&<div className="browse-controls"><form onSubmit={e=>{e.preventDefault();navigate({q:state.q},false);}} className="result-search" role="search" aria-label="结果中搜索"><Label htmlFor="result-query" className="sr-only">结果中搜索</Label><IconSearch size={20}/><Input id="result-query" type="search" maxLength={120} placeholder="换个关键词继续查……" value={state.q} onChange={e=>navigate({q:e.target.value},false)}/><NavbarButton as="button" type="submit" className="coral-button">搜索</NavbarButton></form><div className="filters"><Label htmlFor="chapter" className="sr-only">选择主题</Label><select id="chapter" value={state.chapter} onChange={e=>navigate({chapter:e.target.value},false)}><option value="">全部主题</option>{corpus.chapters.map(c=><option value={c.id} key={c.id}>{c.id}. {c.title}</option>)}</select><Tabs tabs={[{title:'全部建议',value:'all'},{title:'不花钱',value:'free'},{title:`我的收藏${saved.size?' · '+saved.size:''}`,value:'saved'}]} value={quickValue} onChange={v=>navigate({free:v==='free',saved:v==='saved'},false)}/><NavbarButton as="button" type="button" variant="secondary" className="reset-button" onClick={reset}>重置</NavbarButton></div><p className="result-status" role="status">找到 {found.length} 条 · 已显示 {Math.min(limit,found.length)} 条{state.q?` · “${state.q}”`:''}</p></div>}
-  <ExpandableCards cards={cards} active={active} onOpen={openEntry} onClose={close} renderContent={renderContent}/>{browsing&&!found.length&&<div className="empty-state"><h3>{state.saved?'还没有符合条件的收藏':'没有找到这类建议'}</h3><p>{state.saved?'先打开一条建议，点一下收藏，之后在这里找。':'试试更短的词，比如“离职”“押金”，或清除筛选。'}</p><NavbarButton as="button" className="outline-button" onClick={reset}>清除筛选</NavbarButton></div>}{browsing&&found.length>limit?<NavbarButton as="button" className="outline-button show-all" onClick={()=>setLimit(n=>n+12)}>再看 12 条 <IconArrowRight size={18}/></NavbarButton>:!browsing?<NavbarButton as="button" className="outline-button show-all" onClick={()=>navigate({...blank})}>查看全部 650 条建议 <IconArrowRight size={18}/></NavbarButton>:null}</>}</section>
-  <section id="formats" className="book-section"><img className="book-photograph" src={media('knowledge-book')} width="1774" height="887" loading="lazy" alt="书桌上的人生指南书页与 Obsidian 关系图示意"/><div className="book-content page-width"><div className="book-copy"><h2>整套指南，<br/>直接带走。</h2><p>随时查阅，慢慢读。<br/>完整指南，免费带走。</p><div className="download-actions"><NavbarButton href={pdf} className="coral-button"><IconDownload size={19}/> 下载完整 PDF</NavbarButton><NavbarButton href={`${base}downloads/better-life-obsidian.zip`} download className="outline-button"><IconBook2 size={19}/> 下载 Obsidian Vault</NavbarButton></div><details className="more-formats"><summary>其他格式</summary><NavbarButton href={pdf.replace('.pdf','.epub')} className="outline-button">EPUB 电子书</NavbarButton><NavbarButton href={pdf.replace('.pdf','.html')} className="outline-button">离线单文件</NavbarButton></details><p className="book-counts">650 条建议 · 34 个主题</p></div></div></section></main>
-  <footer className="page-width"><div><b>BETTER LIFE</b><p>学校没教，生活会考。好用，就留个入口。</p></div><NavbarButton href={repo} className="outline-button" target="_blank" rel="noopener noreferrer">GitHub 上看项目 <IconExternalLink size={17}/></NavbarButton><a href={`${base}content-source.html`} className="source-link">内容来源</a></footer></MotionConfig>;
+  const [highlighted, setHighlighted] = useState([]), [questionRequest, setQuestionRequest] = useState(null);
+  const [saved, setSaved] = useState(initialSaved), [corpus, setCorpus] = useState(null);
+  const [error, setError] = useState(false), [reload, setReload] = useState(0), [menu, setMenu] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setError(false);
+    fetch(`${base}content.json`, { signal: controller.signal })
+      .then(response => { if (!response.ok) throw Error(response.status); return response.json(); })
+      .then(setCorpus).catch(reason => { if (reason.name !== 'AbortError') setError(true); });
+    return () => controller.abort();
+  }, [reload]);
+
+  const openEntry = entry => window.location.assign(entryLocationHref(base, entry));
+  const toggleSaved = entry => {
+    const next = new Set(saved);
+    if (next.has(entry.id)) next.delete(entry.id); else next.add(entry.id);
+    setSaved(next);
+    try {
+      localStorage.setItem('better-life:saved', JSON.stringify([...next]));
+      return next.has(entry.id) ? '已收藏' : '已取消收藏';
+    } catch { return '本次已保存；浏览器不允许持久保存，刷新后可能丢失。'; }
+  };
+  const renderContent = entry => <ReaderContent key={entry.id} entry={entry} corpus={corpus} saved={saved} onToggleSaved={toggleSaved}/>;
+
+  return <MotionConfig reducedMotion="user">
+    <a className="skip-link" href="#hero-title">跳到提问</a>
+    <Navbar className="site-navbar fixed top-0">
+      <NavBody className="desktop-nav">
+        <Brand/>
+        <NavItems className="nav-items" items={[
+          { name: '按场景找', link: '#scenes' },
+          { name: '查看指南', link: libraryHref },
+          { name: '我的指南', link: `${base}?view=guides` },
+          { name: '会员方案', link: `${base}?view=pricing` },
+        ]}/>
+        <NavbarButton as="button" type="button" className="outline-button nav-account" onClick={openAccount}>{me?.user ? '我的账户' : '登录'}</NavbarButton>
+        <NavbarButton href={pdf} className="outline-button nav-download"><IconDownload size={18}/> 下载 PDF</NavbarButton>
+      </NavBody>
+      <MobileNav><MobileNavHeader><Brand/>
+        <NavbarButton as="button" type="button" className="icon-button" aria-label={menu ? '关闭菜单' : '打开菜单'} aria-expanded={menu} aria-controls="mobile-menu" onClick={() => setMenu(!menu)}>{menu ? <IconX size={23}/> : <IconMenu2 size={23}/>}</NavbarButton>
+      </MobileNavHeader><MobileNavMenu isOpen={menu} onClose={() => setMenu(false)}>
+        <nav id="mobile-menu" aria-label="手机导航">
+          <NavbarButton href="#scenes" variant="secondary" onClick={() => setMenu(false)}>按场景找</NavbarButton>
+          <NavbarButton href={libraryHref} variant="secondary">查看指南</NavbarButton>
+          <NavbarButton href={`${base}?view=guides`} variant="secondary">我的指南</NavbarButton>
+          <NavbarButton href={`${base}?view=pricing`} variant="secondary">会员方案</NavbarButton>
+          <NavbarButton as="button" type="button" variant="secondary" onClick={() => { setMenu(false); openAccount(); }}>{me?.user ? '我的账户' : '登录'}</NavbarButton>
+          <NavbarButton href={pdf} className="outline-button"><IconDownload size={18}/> 下载 PDF</NavbarButton>
+        </nav>
+      </MobileNavMenu></MobileNav>
+    </Navbar>
+    <main>
+      <div className="landing-background" aria-hidden="true" style={{ backgroundImage: `url(${media('hero-background')})` }}/>
+      <section className="hero" aria-labelledby="hero-title">
+        <p className="sr-only hero-tagline">学校没教，生活会考。</p>
+        <h1 id="hero-title" tabIndex={-1}>高性价比<span>人生指南</span></h1>
+        <p className="hero-subtitle">省钱、避坑、少走弯路。</p>
+        <GuideQuestion corpus={corpus} loadError={error} renderSource={renderContent} onResult={setHighlighted} questionRequest={questionRequest}/>
+        {error && <div className="home-corpus-error" role="alert"><p>指南暂时没加载成功，请重试。</p><NavbarButton as="button" type="button" className="outline-button" onClick={() => setReload(value => value + 1)}>重新加载指南</NavbarButton></div>}
+        <div className="hero-meta"><span><b>{corpus?.counts.entries || 650}</b> 条建议 <span aria-hidden="true">·</span> <b>{corpus?.counts.chapters || 34}</b> 个主题</span><NavbarButton href={pdf} variant="secondary" className="meta-pdf"><IconFileTypePdf size={25}/> 下载 PDF</NavbarButton></div>
+      </section>
+      <section id="scenes" className="scene-section page-width" aria-label="按场景查指南"><BentoGrid className="scene-grid">
+        {scenes.map(scene => <BentoGridItem key={scene.chapter} as="a" href={guideLocationHref(base, { chapter: String(scene.chapter) })} className="scene-card" aria-label={`查看${scene.title}`} header={<><img src={media(scene.image)} width="1245" height="624" alt=""/><span className="scene-shade"/></>} title={<h2>{scene.title}</h2>} description={<><p>{scene.description}</p><span className="scene-next"><IconChevronRight size={18}/></span></>}/>)}
+      </BentoGrid></section>
+      <KnowledgeMap corpus={corpus} onOpen={openEntry} highlighted={highlighted}/>
+      <AnswerShowcase corpus={corpus} onOpen={openEntry} onAsk={text => setQuestionRequest({ text, nonce: Date.now() })}/>
+      <div className="browse-invitation page-width"><NavbarButton href={libraryHref} className="outline-button">查看全部 {corpus?.counts.entries || 650} 条建议 <IconArrowRight size={18}/></NavbarButton></div>
+      <section id="formats" className="book-section">
+        <img className="book-photograph" src={media('knowledge-book')} width="1774" height="887" loading="lazy" alt="书桌上的人生指南书页与 Obsidian 关系图示意"/>
+        <div className="book-content page-width"><div className="book-copy"><h2>整套指南，<br/>直接带走。</h2><p>随时查阅，慢慢读。<br/>完整指南，免费带走。</p>
+          <div className="download-actions"><NavbarButton href={pdf} className="coral-button"><IconDownload size={19}/> 下载完整 PDF</NavbarButton><NavbarButton href={`${base}downloads/better-life-obsidian.zip`} download className="outline-button"><IconBook2 size={19}/> 下载 Obsidian Vault</NavbarButton></div>
+          <details className="more-formats"><summary>其他格式</summary><NavbarButton href={pdf.replace('.pdf', '.epub')} className="outline-button">EPUB 电子书</NavbarButton><NavbarButton href={pdf.replace('.pdf', '.html')} className="outline-button">离线单文件</NavbarButton></details>
+          <p className="book-counts">650 条建议 · 34 个主题</p>
+        </div></div>
+      </section>
+    </main>
+    <footer className="page-width"><div><b>BETTER LIFE</b><p>学校没教，生活会考。好用，就留个入口。</p></div><NavbarButton href={repo} className="outline-button" target="_blank" rel="noopener noreferrer">GitHub 上看项目 <IconExternalLink size={17}/></NavbarButton><a href={`${base}content-source.html`} className="source-link">内容来源</a></footer>
+  </MotionConfig>;
 }
