@@ -81,33 +81,8 @@ PDF、EPUB、离线 HTML 来自原作者发布页，可能比本站的内容快�
 
 觉得好用，留一颗 Star；遇到正在需要的人，把对应场景发给他。
 
-## AI 问答与自己的指南，做到哪了？
-
-**免费站目前不提供 AI 提问、登录或购买会员。** 不用为完整原书付费。
-
-DeepSeek 已在本机接入；回答结合原书内容，附可查看的条目出处。自己的指南已支持主动保存、按主题整理、编辑、行动记录、历史版本和 Obsidian 导出。**这些服务尚未在公网开放，真实收码和付款仍待验收。**
-
-[查看会员权益预览](https://fangx-ai.github.io/better-life/?view=pricing) · [个人指南说明](docs/PERSONAL-GUIDE.md)
-
-<details>
-<summary>开发、部署与 AI Skill</summary>
-
-[开发说明](docs/DEVELOPMENT.md) · [登录与会员接通情况](docs/MEMBERSHIP-SERVICE.md) · [独立主站发布说明](docs/PRODUCTION-RELEASE.md) · [原项目 AI Skill](library/skills/life-decision-guide/README.md)
-
-私人内容采用按账号隔离的服务端数据库；原书条目收藏仍在当前浏览器，不自动跨设备同步。实现、模拟测试与真实上线分别记录，不把价格预览当作已经开放收费。
-
-</details>
-
-## 内容从哪里来？
-
-原书是 **[eternity4719 的《高性价比人生指南》](https://github.com/eternity4719/HowToLiveBetter)**。感谢原作者整理正文与出处。
-
-Better Life 新增场景入口、阅读体验、检索、收藏、关系图和导出，**原书正文快照未改写，也不是原作者的官方版本**。具体条件和出处仍可核对原文。
-
-内容快照：**2026-10-03**，上游提交 [`fcc93eb`](https://github.com/eternity4719/HowToLiveBetter/commit/fcc93eb9a4bdc26e8a4e4c94bdaae0a89265927b)。不自动跟随上游更新。
-
-正文：[CC BY 4.0](LICENSE-CONTENT) · 代码：[MIT](LICENSE)
-
 ---
 
-[打开人生工具箱](https://fangx-ai.github.io/better-life/) · [反馈问题](https://github.com/Fangx-AI/better-life/issues/new/choose) · [内容来源与版本](docs/SOURCES.md)
+原作：[eternity4719《高性价比人生指南》](https://github.com/eternity4719/HowToLiveBetter) · 正文 [CC BY 4.0](LICENSE-CONTENT) · 代码 [MIT](LICENSE)
+
+非官方阅读版，原书正文快照未改写。[来源与版本](docs/SOURCES.md) · [开发说明](docs/DEVELOPMENT.md) · [反馈问题](https://github.com/Fangx-AI/better-life/issues/new/choose)
