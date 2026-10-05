@@ -1,15 +1,17 @@
-# 首批成品分享素材（已制作，未发布）
+# 首批成品分享素材（网页已公开，社交推广未发布）
 
-更新：2026-10-05。以下是可直接打开、截图和复制文案的三份成品，不是只列选题的计划。**尚未发布到小红书、朋友圈或任何外部账号，也没有注册账号、买流量、发送邀请或产生已验证转化。** 新分享页本身尚未公开部署；回站链接固定为已知公开 Pages 项目入口 [Better Life](https://fangx-ai.github.io/better-life/)，不指向个人根站，也不假设新生产域名已上线。
+更新：2026-10-05。以下是可直接打开、截图和复制文案的三份成品，不是只列选题的计划。**分享网页已随 main 的免费 Pages 版本公开；尚未发布到小红书、朋友圈或任何社交账号，也没有注册账号、买流量、发送邀请或产生已验证转化。** 回站链接固定为公开 Pages 项目入口 [Better Life](https://fangx-ai.github.io/better-life/)，不指向个人根站，也不假设独立商业主站已上线。`content.json` 的 `prepared-not-published` 描述社交推广尚未发布，不是网页 HTTP 状态。
 
 ## 打开与保存
 
 | 素材 | 静态成品 | 建议用法 |
 | --- | --- | --- |
-| 租房押金 | `public/share-kit/rent-deposit.html` | 签合同、付款、退租交接前保存 |
-| 离职准备 | `public/share-kit/leaving-job.html` | 交电脑、关账号、签文件前保存 |
-| 省钱反冲动 | `public/share-kit/spending-pause.html` | 大额非必需下单、囤货前保存 |
-| 素材目录 | `public/share-kit/index.html` | 选图、内部验收，不作为新站已部署证据 |
+| 租房押金 | [打开清单](https://fangx-ai.github.io/better-life/share-kit/rent-deposit.html) | 签合同、付款、退租交接前保存 |
+| 离职准备 | [打开清单](https://fangx-ai.github.io/better-life/share-kit/leaving-job.html) | 交电脑、关账号、签文件前保存 |
+| 省钱反冲动 | [打开清单](https://fangx-ai.github.io/better-life/share-kit/spending-pause.html) | 大额非必需下单、囤货前保存 |
+| 素材目录 | [打开素材目录](https://fangx-ai.github.io/better-life/share-kit/) | 选图、保存，不代表独立会员主站或社交账号发布 |
+
+本地成品源码：[租房押金](../public/share-kit/rent-deposit.html) · [离职准备](../public/share-kit/leaving-job.html) · [省钱反冲动](../public/share-kit/spending-pause.html)。
 
 无需 API、登录、JavaScript 或第三方字体。直接双击 HTML 即可真实渲染，样式、B 品牌与字体均引用仓库已有本地资源。已有开发服务器时可打开 `/share-kit/`；无需为查看素材调用模型、发送 OTP 或建立收费订单。
 
@@ -119,7 +121,7 @@ Better Life 摘编、重排，非原作者官方版本；快照 2026-10-03，版
 
 完整原书：eternity4719 的[《高性价比人生指南》](https://github.com/eternity4719/HowToLiveBetter)，许可 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)。取自 2026-10-03 快照，[提交 fcc93eb9a4bdc26e8a4e4c94bdaae0a89265927b](https://github.com/eternity4719/HowToLiveBetter/commit/fcc93eb9a4bdc26e8a4e4c94bdaae0a89265927b)。Better Life 对条目摘编、缩写和重排，新增场景标题与版式；不是原作者官方版本，也不表示原作者为产品背书。
 
-公开入口 HEAD 核验于 2026-10-05 返回 200；这只是入口可达，不是 AI、会员收款、搜索收录或新分享页已部署的证明。素材按原书快照取材，未把外部法规未重新核验的内容改写成新的法律保证。
+免费 Pages 的 main 发布任务 [37309802847](https://github.com/Fangx-AI/better-life/actions/runs/37309802847) 已完成；实际 HTTPS 浏览器验证了新版首页、独立章节目录、Obsidian ZIP 与租房清单，均返回 200，未调用 API。其余素材公开路径另以当前 HTTP 检查确认；这不是 AI、会员收款、搜索收录、社交曝光或转化的证明。素材按原书快照取材，未把外部法规未重新核验的内容改写成新的法律保证。
 
 对外只宣传已有的原书免费阅读/检索/下载，不宣传会员已真实开售、已收款或真实模型已经接通。可用统一一句话：**把问题说清楚，结合指南找做法。** 不写保证省钱、保证退款、虚构使用人数、假成交、假推荐或排名承诺。
 
