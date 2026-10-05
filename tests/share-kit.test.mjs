@@ -103,14 +103,21 @@ test('share kit: plain offline HTML/CSS uses existing local brand/font assets; n
   assert.match(css, /max-width:100%/); assert.match(css, /overflow-wrap:anywhere/);
 });
 
-test('share kit: launch copy provides both platform drafts per card and states prepared/non-deployed/non-published boundaries', () => {
+test('share kit: launch copy provides platform drafts, public page links and distinct unexecuted social/paid-service boundaries', () => {
   const doc = readFileSync(resolve(root, 'docs/LAUNCH-CONTENT.md'), 'utf8');
   assert.equal((doc.match(/\*\*小红书标题：\*\*/g) || []).length, 3);
   assert.equal((doc.match(/\*\*小红书正文（可直接复制）：\*\*/g) || []).length, 3);
   assert.equal((doc.match(/\*\*朋友圈配文：\*\*/g) || []).length, 3);
-  for (const card of kit.cards) assert.ok(doc.includes(`public/share-kit/${card.file}`));
-  assert.match(doc, /尚未发布到小红书、朋友圈或任何外部账号/);
-  assert.match(doc, /新分享页本身尚未公开部署/);
+  for (const card of kit.cards) {
+    assert.ok(doc.includes(`public/share-kit/${card.file}`));
+    assert.ok(doc.includes(`${site}share-kit/${card.file}`));
+  }
+  // This checks the documented distinction, not the live HTTP deployment.
+  // Actual Pages status/browser evidence is recorded separately by the release.
+  assert.match(doc, /分享网页已随 main 的免费 Pages 版本公开/);
+  assert.match(doc, /尚未发布到小红书、朋友圈或任何社交账号/);
+  assert.doesNotMatch(doc, /新分享页本身尚未公开部署/);
+  assert.match(doc, /不是网页 HTTP 状态/);
   assert.match(doc, /不宣传会员已真实开售/);
   assert.ok(doc.includes(site));
   assert.ok(doc.includes(corpus.source.revision));
