@@ -1,5 +1,6 @@
 import { NavbarButton } from './ui/resizable-navbar';
 import { useMembership } from './membership/membership-context.jsx';
+import { PUBLIC_ONLY } from '../lib/public-mode.mjs';
 import './service-info.css';
 
 const base = import.meta.env.BASE_URL;
@@ -19,6 +20,18 @@ const sections = {
     ['可用性', '服务实际开放状态以本站显示为准。出现故障时可以继续阅读和导出已有内容；不要把本机演示、价格预览或模拟支付当作正式会员购买。'],
   ],
 };
+const publicSections = {
+  privacy: [
+    ['免费阅读站', '当前提供原书阅读、检索与下载，不提供登录、AI 提问或付款，不向会员、模型或统计接口发送请求。'],
+    ['浏览器收藏', '原书条目收藏保存在当前浏览器，本项目不会把它上传到服务器。清理浏览器数据可能移除收藏。'],
+    ['外部下载与链接', 'PDF 等电子书下载和原作者项目链接会打开 GitHub，由相应站点处理访问。本站下载的 Obsidian 压缩包只包含公开指南，不含个人账号数据。'],
+  ],
+  terms: [
+    ['免费内容', '原书阅读、检索、来源、PDF 与 Obsidian 下载保持免费。原书归原作者，本项目不代表原作者背书。'],
+    ['尚未开放的服务', '当前 AI、登录与会员服务尚未开放。会员页面仅为价格与权益预览，不创建订单或扣款；私人指南与运营后台入口不可用。'],
+    ['阅读与出处', '建议有适用条件、时间、地区及人群限制，完整原文和出处可以查看。请结合自己的实际情况使用。'],
+  ],
+};
 
 export function ServiceInfoPage({ view = 'privacy' }) {
   const { status } = useMembership();
@@ -26,7 +39,7 @@ export function ServiceInfoPage({ view = 'privacy' }) {
   return <main className="service-info-page">
     <nav aria-label="服务说明导航"><NavbarButton href={base} className="outline-button">返回首页</NavbarButton><NavbarButton href={`${base}?view=${privacy ? 'terms' : 'privacy'}`} variant="secondary">{privacy ? '服务说明' : '隐私说明'}</NavbarButton></nav>
     <header><img src={`${base}media/brand.webp`} width="44" height="44" alt=""/><h1>{privacy ? '隐私说明' : '服务说明'}</h1><p>更新于 2026 年 10 月 5 日</p></header>
-    {sections[privacy ? 'privacy' : 'terms'].map(([title, content]) => <section key={title}><h2>{title}</h2><p>{content}</p></section>)}
+    {(PUBLIC_ONLY ? publicSections : sections)[privacy ? 'privacy' : 'terms'].map(([title, content]) => <section key={title}><h2>{title}</h2><p>{content}</p></section>)}
     {status.supportUrl && <NavbarButton href={status.supportUrl} className="coral-button" rel="noopener noreferrer" target="_blank">联系客服</NavbarButton>}
   </main>;
 }

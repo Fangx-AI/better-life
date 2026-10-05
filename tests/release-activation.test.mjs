@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { posix as path, join as hostJoin, dirname as hostDirname, resolve as hostResolve } from 'node:path';
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { releaseActivation, ACTIVATION_PATHS as P, parseProductionEnv, validActivationDomain, activationUnit, activationNginx, assertDomainUnused, buildActivationEnv, assertActivationCertificateMetadata, checkActivationCertificate, checkDatabaseHeader, parseActivationArguments } from '../scripts/release-activation.mjs';
@@ -39,7 +39,7 @@ class VirtualFs {
   statfsSync() { return { bavail: 10 * 1024 * 1024, bsize: 4096 }; }
   snapshot() { return JSON.stringify([...this.nodes].map(([key, value]) => [key, { ...value, bytes: value.bytes?.toString('base64') }])); }
 }
-function fixture() {
+function fixture({ packageJson, packageLockJson } = {}) {
   const fs = new VirtualFs(), calls = [], healthCalls = [], bundles = new Map(); let clock = Date.UTC(2026, 9, 5), active = false, currentOptions, failCommand, healthFailure;
   for (const directory of [P.releases, P.incoming, P.config, P.tls, P.data, P.backup, '/etc/systemd/system', '/etc/nginx/conf.d', '/usr/bin', '/usr/sbin']) fs.mkdirSync(directory, { recursive: true });
   for (const directory of [P.config, P.tls]) fs.chmodSync(directory, 0o700);
@@ -51,8 +51,8 @@ function fixture() {
   fs.put(P.env, `${Object.entries(env).map(([key, value]) => `${key}=${value}`).join('\n')}\n`, { mode: 0o600 });
   const imageConfig = '/etc/nginx/conf.d/image2.conf', imageText = 'server { listen 443 ssl; server_name image2.fixture-owned.org; }\n'; fs.put(imageConfig, imageText);
   function seed(releaseId = 'fixture-release-1') {
-    const bundle = `${P.incoming}/${releaseId}`, source = { 'package.json': JSON.stringify({ name: 'better-life', scripts: { check: 'npm run build && npm test && node library/tools/check-plain.mjs && node library/tools/check-refs.mjs --check', build: 'node scripts/build.mjs && vite build && node scripts/prepare-sites-build.mjs', test: 'node --test tests/*.test.mjs' } }),
-      'package-lock.json': JSON.stringify({ name: 'better-life', lockfileVersion: 3, packages: { '': {}, 'node_modules/fixture': { resolved: 'https://registry.npmjs.org/fixture/-/fixture-1.0.0.tgz', integrity: `sha512-${Buffer.alloc(64).toString('base64')}` } } }), 'server/app.mjs': 'synthetic trusted app source', 'scripts/production-preflight.mjs': 'synthetic trusted preflight source' };
+    const bundle = `${P.incoming}/${releaseId}`, source = { 'package.json': packageJson ?? JSON.stringify({ name: 'better-life', scripts: { check: 'npm run build && npm test && node library/tools/check-plain.mjs && node library/tools/check-refs.mjs --check', build: 'node scripts/build.mjs && vite build && node scripts/prepare-sites-build.mjs', test: 'node --test --test-concurrency=4 tests/*.test.mjs' } }),
+      'package-lock.json': packageLockJson ?? JSON.stringify({ name: 'better-life', lockfileVersion: 3, packages: { '': {}, 'node_modules/fixture': { resolved: 'https://registry.npmjs.org/fixture/-/fixture-1.0.0.tgz', integrity: `sha512-${Buffer.alloc(64).toString('base64')}` } } }), 'server/app.mjs': 'synthetic trusted app source', 'scripts/production-preflight.mjs': 'synthetic trusted preflight source' };
     for (const [name, value] of Object.entries(source)) fs.put(`${bundle}/${name}`, value);
     const manifest = JSON.stringify({ releaseId, files: Object.entries(source).map(([name, value]) => ({ path: name, sha256: digest(value), size: value.length })) }); fs.put(`${bundle}/release-manifest.json`, manifest);
     const expectedSha256 = digest(manifest); bundles.set(releaseId, { source, manifest, expectedSha256 }); currentOptions = { bundle, expectedSha256, releaseId, domain: DOMAIN }; return { ...currentOptions };
@@ -96,6 +96,65 @@ function fixture() {
 test('activation default preflight is read-only, verifies trusted bundle and never claims build or activation', async () => {
   const h = fixture(), before = h.fs.snapshot(), result = await h.invoke(); assert.equal(result.ok, true); assert.equal(result.state, 'preflight-passed'); assert.equal(result.productionActivated, false); assert.equal(result.buildAndTestsVerified, false);
   assert.equal(h.fs.snapshot(), before); assert.equal(h.fs.mutations.length, 0); assert.ok(!h.calls.some(call => call.args.includes('start') || call.args.includes('reload') || call.args.includes('ci'))); h.safe();
+});
+test('actual repository package and lockfile pass the virtual read-only production preflight contract', async () => {
+  // Only public source metadata is read. All Linux paths, secrets, commands,
+  // certificates, DNS and database sentinels remain synthetic and injected.
+  const packageJson = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
+  const packageLockJson = readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8');
+  assert.equal(JSON.parse(packageJson).scripts.test, 'node --test --test-concurrency=4 tests/*.test.mjs');
+  const h = fixture({ packageJson, packageLockJson }), before = h.fs.snapshot(), result = await h.invoke('preflight');
+  assert.equal(result.ok, true, JSON.stringify(result)); assert.equal(result.state, 'preflight-passed'); assert.equal(result.productionActivated, false); assert.equal(result.buildAndTestsVerified, false);
+  assert.equal(h.fs.snapshot(), before); assert.equal(h.fs.mutations.length, 0); assert.equal(h.healthCalls.length, 0);
+  assert.ok(!h.calls.some(call => call.args.includes('start') || call.args.includes('reload') || call.args.includes('ci') || call.args.includes('check'))); h.safe();
+});
+test('test script contract rejects old uncapped, arbitrary concurrency, loaders and shell injection before mutation', async () => {
+  const actualPackage = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  for (const command of ['node --test tests/*.test.mjs', 'node --test --test-concurrency=8 tests/*.test.mjs', 'node --test --test-concurrency=4 --import=./injected.mjs tests/*.test.mjs', 'node --test --test-concurrency=4 tests/*.test.mjs; node injected.mjs', 'node --test --test-concurrency=4 tests/*.test.mjs\nnode injected.mjs']) {
+    const h = fixture({ packageJson: JSON.stringify({ ...actualPackage, scripts: { ...actualPackage.scripts, test: command } }) }), before = h.fs.snapshot(), result = await h.invoke('preflight');
+    assert.equal(result.ok, false); assert.equal(result.code, 'LOCKED_DEPENDENCIES'); assert.equal(h.fs.snapshot(), before); assert.equal(h.fs.mutations.length, 0); assert.equal(h.healthCalls.length, 0); h.safe();
+  }
+});
+test('real bundled lock metadata requires its closest declared registry and SHA512 anchor', async () => {
+  const packageJson = readFileSync(new URL('../package.json', import.meta.url), 'utf8'), realLock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'));
+  const parent = 'node_modules/@tailwindcss/oxide-wasm32-wasi', child = `${parent}/node_modules/@emnapi/core`;
+  assert.equal(realLock.packages[child].inBundle, true); assert.ok(realLock.packages[parent].bundleDependencies.includes('@emnapi/core'));
+  assert.equal(Object.hasOwn(realLock.packages[child], 'resolved'), false); assert.equal(Object.hasOwn(realLock.packages[child], 'integrity'), false);
+  // A nested bundled dependency has a declared dependency relation at every
+  // bundled level, with fetch integrity anchored at the deepest registry parent.
+  const nested = structuredClone(realLock); nested.packages[`${child}/node_modules/tslib`] = structuredClone(realLock.packages[`${parent}/node_modules/tslib`]);
+  const accepted = fixture({ packageJson, packageLockJson: JSON.stringify(nested) }), before = accepted.fs.snapshot();
+  assert.equal((await accepted.invoke('preflight')).ok, true); assert.equal(accepted.fs.snapshot(), before); accepted.safe();
+  const malicious = [
+    lock => { lock.packages[child] = null; },
+    lock => { lock.packages[child] = []; },
+    lock => { lock.packages['node_modules/unanchored'] = { version: '1.0.0', inBundle: true }; },
+    lock => { lock.packages['node_modules/missing/node_modules/unanchored'] = { version: '1.0.0', inBundle: true }; },
+    lock => { delete lock.packages[parent].bundleDependencies; },
+    lock => { delete lock.packages[parent].integrity; },
+    lock => { lock.packages[parent].resolved = 'https://unknown.invalid/parent.tgz'; },
+    lock => { lock.packages[child].resolved = 'https://registry.npmjs.org/child/-/child-1.0.0.tgz'; },
+    lock => { lock.packages[child].resolved = 'file:../../outside'; },
+    lock => { lock.packages[child].integrity = `sha512-${Buffer.alloc(64).toString('base64')}`; },
+    lock => { lock.packages[child].link = true; },
+    lock => { lock.packages[child].link = false; },
+    lock => { lock.packages[child].path = '/outside'; },
+    lock => { lock.packages[child].workspace = true; },
+    lock => { lock.packages[child].version = 'file:../../outside'; },
+    lock => { lock.packages[child].inBundle = 'true'; },
+    lock => { lock.packages[child].inBundle = false; },
+    lock => { lock.packages[`${parent}/node_modules/../outside`] = { version: '1.0.0', inBundle: true }; },
+    lock => { lock.packages[`${parent}\\node_modules\\outside`] = { version: '1.0.0', inBundle: true }; },
+    lock => { lock.packages[`${parent}/node_modules/not-declared`] = { version: '1.0.0', inBundle: true }; },
+    lock => { lock.packages[`${child}/node_modules/not-declared`] = { version: '1.0.0', inBundle: true }; },
+    lock => { lock.packages[`${child}/node_modules/tslib`] = { version: '1.0.0', inBundle: true }; lock.packages[child].dependencies.tslib = 'file:../../outside'; },
+    lock => { lock.packages[`${child}/node_modules/tslib`] = { version: '1.0.0', inBundle: true }; lock.packages[child] = { version: '1.0.0', resolved: 'https://registry.npmjs.org/core/-/core-1.0.0.tgz', integrity: `sha512-${Buffer.alloc(64).toString('base64')}`, bundleDependencies: [] }; },
+  ];
+  for (const mutate of malicious) {
+    const lockfile = structuredClone(realLock); mutate(lockfile);
+    const h = fixture({ packageJson, packageLockJson: JSON.stringify(lockfile) }), unchanged = h.fs.snapshot(), result = await h.invoke('preflight');
+    assert.equal(result.ok, false); assert.equal(result.code, 'LOCKED_DEPENDENCIES'); assert.equal(h.fs.snapshot(), unchanged); assert.equal(h.fs.mutations.length, 0); assert.equal(h.healthCalls.length, 0); h.safe();
+  }
 });
 test('CLI defaults option-first/empty arguments to preflight and rejects duplicate, unknown, odd or malformed arguments', async () => {
   const h = fixture(), options = h.options, flags = ['--bundle', options.bundle, '--release-id', options.releaseId, '--domain', options.domain, '--expected-sha256', options.expectedSha256];

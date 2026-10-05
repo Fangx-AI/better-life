@@ -17,6 +17,8 @@ import { createQaAnalyticsAttempt } from '../lib/analytics-flow.mjs';
 import { createQaRequestGate, previewQaStep } from '../lib/qa-request-gate.mjs';
 import { sendConversationQuestion } from '../lib/qa-conversation-request.mjs';
 import { guideLocationHref } from '../lib/guide-location.mjs';
+import { PUBLIC_ONLY } from '../lib/public-mode.mjs';
+import './public-mode.css';
 import '../qa-polish.css';
 
 const placeholders = ['直接问：房东不退押金，我该怎么办？', '直接问：准备离职，哪些材料要先留下？', '直接问：最近总是睡不着，怎么调整？'];
@@ -45,6 +47,14 @@ function ConversationAnswer({ turn, renderSource }) {
 }
 
 export function GuideQuestion({ corpus, loadError, renderSource, onResult, questionRequest }) {
+  if (PUBLIC_ONLY) return <div className="guide-question public-question">
+    <div className="public-question-bar"><IconMessageCircle size={24} aria-hidden="true"/><p id="public-qa-status" tabIndex={-1} role="status">AI提问暂未开放</p><NavbarButton href={guideLocationHref(import.meta.env.BASE_URL)} className="coral-button">查看指南<IconArrowRight size={18}/></NavbarButton></div>
+    <div className="question-examples" aria-label="免费阅读主题">{[['租房与买房', '15'], ['工作与离职', '19'], ['少花冤枉钱', '5']].map(([label, chapter]) => <NavbarButton key={chapter} href={guideLocationHref(import.meta.env.BASE_URL, { chapter })} variant="secondary">{label}</NavbarButton>)}</div>
+  </div>;
+  return <LiveGuideQuestion corpus={corpus} loadError={loadError} renderSource={renderSource} onResult={onResult} questionRequest={questionRequest}/>;
+}
+
+function LiveGuideQuestion({ corpus, loadError, renderSource, onResult, questionRequest }) {
   const track = useAnalytics();
   const { me, openAccount, refresh, status: membershipStatus } = useMembership();
   const owner = me?.user?.id || '', ownerRef = useRef(owner), previousOwner = useRef(owner);

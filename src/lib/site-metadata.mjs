@@ -1,3 +1,4 @@
+import { PUBLIC_ONLY } from './public-mode.mjs';
 const pages = {
   home: { title: '高性价比人生指南 · Better Life — 省钱、避坑、少走弯路', description: '学校没教，生活会考。结合原书直接提问，把好建议变成自己的生活。650 条生活建议，34 个主题，免费阅读与下载 PDF。' },
   library: { title: '阅读人生指南 · Better Life', description: '按章节阅读 650 条生活建议：工作、省钱、住房等 34 个主题。查看适用条件、限制和原始出处，搜索与收藏仅在本机使用。' },
@@ -8,8 +9,9 @@ const pages = {
   terms: { title: '服务说明 · Better Life', description: '了解免费内容、会员权益与售后申请方式。' },
 };
 
-export function routeMetadata({ view = 'home', siteUrl, indexing = true, currentOrigin } = {}) {
-  const page = pages[view] || pages.home;
+export function routeMetadata({ view = 'home', siteUrl, indexing = true, currentOrigin, publicOnly = PUBLIC_ONLY } = {}) {
+  let page = pages[view] || pages.home;
+  if (publicOnly && view === 'home') page = { ...page, description: '学校没教，生活会考。650 条生活建议，34 个主题。按章节阅读、检索和收藏，免费下载 PDF 与 Obsidian。AI 提问暂未开放。' };
   let url;
   try { url = new URL(siteUrl); } catch { return { ...page, canonical: null, robots: 'noindex,nofollow' }; }
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) return { ...page, canonical: null, robots: 'noindex,nofollow' };

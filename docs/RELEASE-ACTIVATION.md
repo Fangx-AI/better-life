@@ -110,6 +110,8 @@ node /可信工具目录/scripts/release-activation.mjs recover
 
 ## 验证清单
 
+依赖预检现在与真实 `package.json` 的固定4并行命令一致，并在虚拟系统中读取真实锁文件回归，不只依赖手写简化 fixture。当前 Tailwind WASM 包含6个 `inBundle` 子包；[npm 锁文件说明](https://docs.npmjs.com/cli/v11/configuring-npm/package-lock-json/) 将该标记定义为随父包分发的依赖。工具只接受规范嵌套路径、明确布尔与版本、无额外 fetch/link 字段，并沿声明关系找到最近官方 registry/SHA512 父包；不因该标记放开任意无校验条目。顶层伪标记、无声明/坏父包、外部URL、链接和命令篡改都拒绝。
+
 本机定向检查：`node --test tests/release-activation.test.mjs tests/release-manifest.test.mjs` 及 `node --check scripts/release-activation.mjs`。合成测试覆盖只读模式、身份/权限/路径/域名/价格配置接口闸门、Linux ps 退出码、无敏感 build env、候选/最终 TLS 失败、Nginx/systemd 失败、原子 committed journal 写失败、活锁/未知品牌与非法 PID、旧代码篡改、prepare 崩溃、旧 env 变化、备份钉住 release 保留、回滚失败 quarantine 和显式 recover；真实 npm 配置加载 probe 不安装依赖、不访问网络。它们**不证明真实 SAN/私钥/CA/DNS/systemd/Nginx/锁定依赖安装或现场迁移通过**；默认代码使用 Node X509/OpenSSL 真实验证这些，必须在真实独立前置资料齐全后验收。
 
 未来真实激活后，还需从站外检查公网 DNS/HTTPS/页面/API、其他现有站点、真实收码、模型质量/预算及独立备份恢复演练。收费上线另需用户明确授权、真实商户与政策验收；本工具不会自动改变 `MEMBERSHIP_PAYMENT_CREATE_ENABLED=false`。

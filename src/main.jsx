@@ -10,6 +10,8 @@ import { readAppView } from './lib/guide-location.mjs';
 import { AnalyticsPageView } from './components/analytics.jsx';
 import { SiteMetadata } from './components/site-metadata.jsx';
 import { AnalyticsInteractions } from './components/analytics-interactions.jsx';
+import { PUBLIC_ONLY, publicRouteBlocked } from './lib/public-mode.mjs';
+import { PublicServiceUnavailable } from './components/public-service-unavailable.jsx';
 
 const PricingPage = React.lazy(() => import('./components/membership/pricing-page.jsx').then(module => ({ default: module.PricingPage })));
 const PersonalGuidePage = React.lazy(() => import('./components/personal-guide/index.jsx').then(module => ({ default: module.PersonalGuidePage })));
@@ -41,9 +43,9 @@ root.render(
       <AnalyticsPageView view={view}/>
       <AnalyticsInteractions view={view}/>
       <RouteBoundary><React.Suspense fallback={<RouteLoading />}>
-        {view === 'operations' ? <OperationsPage/> : view === 'privacy' || view === 'terms' ? <ServiceInfoPage view={view}/> : view === 'pricing' ? <PricingPage /> : view === 'guides' ? <PersonalGuidePage /> : view === 'library' ? <LibraryPage /> : <App />}
+        {publicRouteBlocked(view) ? <PublicServiceUnavailable/> : view === 'operations' ? <OperationsPage/> : view === 'privacy' || view === 'terms' ? <ServiceInfoPage view={view}/> : view === 'pricing' ? <PricingPage /> : view === 'guides' ? <PersonalGuidePage /> : view === 'library' ? <LibraryPage /> : <App />}
       </React.Suspense></RouteBoundary>
-      <AccountDialog />
+      {!PUBLIC_ONLY && <AccountDialog />}
     </MembershipProvider>
   </React.StrictMode>,
 );

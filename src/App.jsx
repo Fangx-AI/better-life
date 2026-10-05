@@ -11,6 +11,7 @@ import { ReaderContent } from './components/reader-content';
 import { useMembership } from './components/membership/membership-context.jsx';
 import { useAnalytics } from './components/analytics.jsx';
 import { trackOptionalAnalytics } from './lib/analytics-flow.mjs';
+import { PUBLIC_ONLY } from './lib/public-mode.mjs';
 
 const base = import.meta.env.BASE_URL;
 const media = name => `${base}media/${name}.webp`;
@@ -66,17 +67,17 @@ export function App() {
   const renderContent = entry => <ReaderContent key={entry.id} entry={entry} corpus={corpus} saved={saved} onToggleSaved={toggleSaved}/>;
 
   return <MotionConfig reducedMotion="user">
-    <a className="skip-link" href="#hero-title">跳到提问</a>
+    <a className="skip-link" href="#hero-title">{PUBLIC_ONLY ? '跳到内容' : '跳到提问'}</a>
     <Navbar className="site-navbar fixed top-0">
       <NavBody className="desktop-nav">
         <Brand/>
         <NavItems className="nav-items" items={[
           { name: '按场景找', link: '#scenes' },
           { name: '查看指南', link: libraryHref },
-          { name: '我的指南', link: `${base}?view=guides` },
+          ...(!PUBLIC_ONLY ? [{ name: '我的指南', link: `${base}?view=guides` }] : []),
           { name: '会员方案', link: `${base}?view=pricing` },
         ]}/>
-        <NavbarButton as="button" type="button" className="outline-button nav-account" onClick={openAccount}>{me?.user ? '我的账户' : '登录'}</NavbarButton>
+        {!PUBLIC_ONLY && <NavbarButton as="button" type="button" className="outline-button nav-account" onClick={openAccount}>{me?.user ? '我的账户' : '登录'}</NavbarButton>}
         <NavbarButton href={pdf} className="outline-button nav-download"><IconDownload size={18}/> 下载 PDF</NavbarButton>
       </NavBody>
       <MobileNav><MobileNavHeader><Brand/>
@@ -85,9 +86,9 @@ export function App() {
         <nav id="mobile-menu" aria-label="手机导航">
           <NavbarButton href="#scenes" variant="secondary" onClick={() => setMenu(false)}>按场景找</NavbarButton>
           <NavbarButton href={libraryHref} variant="secondary">查看指南</NavbarButton>
-          <NavbarButton href={`${base}?view=guides`} variant="secondary">我的指南</NavbarButton>
+          {!PUBLIC_ONLY && <NavbarButton href={`${base}?view=guides`} variant="secondary">我的指南</NavbarButton>}
           <NavbarButton href={`${base}?view=pricing`} variant="secondary">会员方案</NavbarButton>
-          <NavbarButton as="button" type="button" variant="secondary" onClick={() => { setMenu(false); openAccount(); }}>{me?.user ? '我的账户' : '登录'}</NavbarButton>
+          {!PUBLIC_ONLY && <NavbarButton as="button" type="button" variant="secondary" onClick={() => { setMenu(false); openAccount(); }}>{me?.user ? '我的账户' : '登录'}</NavbarButton>}
           <NavbarButton href={pdf} className="outline-button"><IconDownload size={18}/> 下载 PDF</NavbarButton>
         </nav>
       </MobileNavMenu></MobileNav>

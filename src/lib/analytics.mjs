@@ -1,4 +1,5 @@
 import { ANALYTICS_SESSION_MS, ANALYTICS_VERSION, CLIENT_ANALYTICS_EVENTS, analyticsDimensions, validAnalyticsSession } from '../../shared/analytics-schema.mjs';
+import { publicAnalyticsEnabled } from './public-mode.mjs';
 
 const SESSION_KEY = 'better-life:analytics-session';
 export function analyticsPrivacyBlocked({ navigator = globalThis.navigator, window = globalThis.window } = {}) {
@@ -35,7 +36,7 @@ export function createAnalyticsClient({ enabled = false, origin = globalThis.loc
     return saved.id;
   }
   async function track(name, input = {}) {
-    if (!enabled || !url || typeof fetchImpl !== 'function' || analyticsPrivacyBlocked({ navigator, window }) || !CLIENT_ANALYTICS_EVENTS.includes(name)) return false;
+    if (!publicAnalyticsEnabled(enabled ? 'true' : 'false') || !url || typeof fetchImpl !== 'function' || analyticsPrivacyBlocked({ navigator, window }) || !CLIENT_ANALYTICS_EVENTS.includes(name)) return false;
     const dimensions = analyticsDimensions(name, input), sessionId = session();
     if (!dimensions || !sessionId) return false;
     const key = JSON.stringify([sessionId, name, dimensions]), time = now();

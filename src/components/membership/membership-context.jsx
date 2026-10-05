@@ -4,13 +4,21 @@ import { MEMBERSHIP_PLANS } from '../../../shared/membership-plans.mjs';
 import { paymentReturnOrderId } from '../../lib/payment-return.mjs';
 import { useAnalytics } from '../analytics.jsx';
 import { checkoutReturnOutcome, createCheckoutReturnAnalyticsAttempt } from '../../lib/analytics-flow.mjs';
+import { PUBLIC_ONLY } from '../../lib/public-mode.mjs';
 
 // Display-only fallback. It never creates a session or grants an entitlement.
 const previewPlans = MEMBERSHIP_PLANS.map(plan => ({ ...plan, purchasable: false }));
 const previewStatus = { available: false, preview: true, enforced: false, loginAvailable: false, emailLoginAvailable: false, phoneLoginAvailable: false, checkoutAvailable: false, annualAvailable: false, localDemoAvailable: false, plans: previewPlans };
 const MembershipContext = createContext(null);
+const publicMembership = Object.freeze({ status: { ...previewStatus, publicOnly: true }, me: null, loading: false, serviceError: '', accountOpen: false, accountView: 'auto', checkoutPlanId: null, paymentReturn: null,
+  refresh: async () => {}, openAccount: () => {}, closeAccount: () => {}, openCheckout: () => {}, setAccountView: () => {}, acceptLogin: () => {}, updateMember: () => {}, logout: async () => {},
+});
 
 export function MembershipProvider({ children }) {
+  return PUBLIC_ONLY ? <MembershipContext.Provider value={publicMembership}>{children}</MembershipContext.Provider> : <LiveMembershipProvider>{children}</LiveMembershipProvider>;
+}
+
+function LiveMembershipProvider({ children }) {
   const track = useAnalytics();
   const [status, setStatus] = useState(previewStatus), [me, setMe] = useState(null), [loading, setLoading] = useState(true), [serviceError, setServiceError] = useState('');
   const [accountOpen, setAccountOpen] = useState(false), [accountView, setAccountView] = useState('auto'), [checkoutPlanId, setCheckoutPlanId] = useState(null);

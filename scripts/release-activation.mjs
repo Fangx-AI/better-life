@@ -286,10 +286,33 @@ function checkDependencies(c, bundle) {
   const pkg = JSON.parse(text(c, `${bundle}/package.json`, 131072)), lockfile = JSON.parse(text(c, `${bundle}/package-lock.json`, 8 * 1024 * 1024));
   guard(pkg.name === 'better-life' && lockfile.name === 'better-life' && [2, 3].includes(lockfile.lockfileVersion) && lockfile.packages &&
     pkg.scripts?.check === 'npm run build && npm test && node library/tools/check-plain.mjs && node library/tools/check-refs.mjs --check' &&
-    pkg.scripts?.build === 'node scripts/build.mjs && vite build && node scripts/prepare-sites-build.mjs' && pkg.scripts?.test === 'node --test tests/*.test.mjs', 'LOCKED_DEPENDENCIES');
+    pkg.scripts?.build === 'node scripts/build.mjs && vite build && node scripts/prepare-sites-build.mjs' && pkg.scripts?.test === 'node --test --test-concurrency=4 tests/*.test.mjs', 'LOCKED_DEPENDENCIES');
+  const own = (entry, key) => Object.hasOwn(entry, key);
+  const packagePath = name => typeof name === 'string' && name.length <= 2048 && /^node_modules\/(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*(?:\/node_modules\/(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*)*$/.test(name);
+  const object = entry => entry && typeof entry === 'object' && !Array.isArray(entry);
+  const registry = entry => object(entry) && !own(entry, 'inBundle') && !entry.link && /^https:\/\/registry\.npmjs\.org\//.test(entry.resolved ?? '') && /^sha512-[A-Za-z0-9+/]+={0,2}$/.test(entry.integrity ?? '');
+  const bundled = entry => object(entry) && entry.inBundle === true && ['resolved', 'integrity', 'link', 'path', 'workspace'].every(key => !own(entry, key)) && typeof entry.version === 'string' && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(entry.version);
   for (const [name, entry] of Object.entries(lockfile.packages)) {
     if (!name) continue;
-    guard(name.startsWith('node_modules/') && !name.split('/').includes('..') && !entry.link && /^https:\/\/registry\.npmjs\.org\//.test(entry.resolved ?? '') && /^sha512-[A-Za-z0-9+/]+={0,2}$/.test(entry.integrity ?? ''), 'LOCKED_DEPENDENCIES');
+    guard(packagePath(name) && object(entry), 'LOCKED_DEPENDENCIES');
+    if (!own(entry, 'inBundle')) { guard(registry(entry), 'LOCKED_DEPENDENCIES'); continue; }
+    // npm lockfiles omit fetch metadata for dependencies already included in a
+    // verified parent tarball. Never accept a bare inBundle claim: prove each
+    // containing package, stop at the closest registry+SHA512 anchor, and require
+    // that anchor's explicit bundle declaration. No extra transport is allowed.
+    guard(bundled(entry), 'LOCKED_DEPENDENCIES');
+    let child = name, anchored = false;
+    while (child.includes('/node_modules/')) {
+      const index = child.lastIndexOf('/node_modules/'), parentName = child.slice(0, index), childName = child.slice(index + '/node_modules/'.length), parent = lockfile.packages[parentName];
+      guard(packagePath(parentName) && object(parent), 'LOCKED_DEPENDENCIES');
+      if (!own(parent, 'inBundle')) {
+        guard(registry(parent) && Array.isArray(parent.bundleDependencies) && parent.bundleDependencies.includes(childName), 'LOCKED_DEPENDENCIES');
+        anchored = true; break;
+      }
+      guard(bundled(parent) && object(parent.dependencies) && own(parent.dependencies, childName) && typeof parent.dependencies[childName] === 'string' && !/(?:[:/\\]|\x00)/.test(parent.dependencies[childName]), 'LOCKED_DEPENDENCIES');
+      child = parentName;
+    }
+    guard(anchored, 'LOCKED_DEPENDENCIES');
   }
 }
 async function inspect(c, options, { checkHealth = false } = {}) {

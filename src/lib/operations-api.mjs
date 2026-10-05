@@ -1,4 +1,5 @@
 import { CLIENT_ANALYTICS_EVENTS, SERVER_ANALYTICS_EVENTS } from '../../shared/analytics-schema.mjs';
+import { assertServerFeatures } from './public-mode.mjs';
 const siteBase = import.meta.env?.BASE_URL || '/';
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(value);
 const validSecret = value => typeof value === 'string' && /^[A-Za-z0-9_-]{64}$/.test(value);
@@ -112,6 +113,7 @@ export function validateOperationsResponse(path, value) {
 
 export async function operationsRequest(path, { token, method = 'GET', query = {}, body, signal, origin = globalThis.location?.origin,
   basePath = siteBase, fetchImpl = globalThis.fetch?.bind(globalThis), timeoutMs = 10000 } = {}) {
+  assertServerFeatures();
   if (path !== 'status' && !validSecret(token)) throw new OperationsClientError(401, 'operations_unauthorized');
   if (!['GET', 'PATCH'].includes(method) || method === 'PATCH' && !/^refund-tickets\/[A-Za-z0-9_-]{8,128}$/.test(path)) throw new OperationsClientError(0);
   if (method === 'PATCH' && (!object(body) || Object.keys(body).some(key => !['revision', 'state'].includes(key)) || !count(body.revision) || body.revision < 1 || !Object.hasOwn(OPERATIONS_TICKET_LABELS, body.state))) throw new OperationsClientError(0);

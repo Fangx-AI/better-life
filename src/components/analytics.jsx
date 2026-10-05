@@ -1,9 +1,10 @@
 import { useCallback, useEffect } from 'react';
 import { createAnalyticsClient } from '../lib/analytics.mjs';
+import { publicAnalyticsEnabled } from '../lib/public-mode.mjs';
 
 let client;
 function browserClient() {
-  client ??= createAnalyticsClient({ enabled: import.meta.env.VITE_ANALYTICS_ENABLED === 'true', basePath: import.meta.env.BASE_URL || '/' });
+  client ??= createAnalyticsClient({ enabled: publicAnalyticsEnabled(import.meta.env.VITE_ANALYTICS_ENABLED), basePath: import.meta.env.BASE_URL || '/' });
   return client;
 }
 export function useAnalytics() {

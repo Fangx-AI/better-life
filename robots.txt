@@ -1,4 +1,5 @@
 User-agent: *
-Allow: /
+Allow: /better-life/
+Disallow: /better-life/api/
 Disallow: /api/
 Sitemap: https://fangx-ai.github.io/better-life/sitemap.xml

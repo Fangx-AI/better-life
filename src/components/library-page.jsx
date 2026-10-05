@@ -13,6 +13,7 @@ import { useMembership } from './membership/membership-context';
 import { readGuideLocation, guideLocationHref, entryLocationHref } from '../lib/guide-location.mjs';
 import { matchesGuideEntry } from '../lib/guide-filters.mjs';
 import { readerText } from '../lib/reader-text.mjs';
+import { PUBLIC_ONLY } from '../lib/public-mode.mjs';
 import '../library-page.css';
 
 const base = import.meta.env.BASE_URL;
@@ -177,7 +178,7 @@ export function LibraryPage() {
         </div>;
       })}
     </nav>
-    <div className="library-directory-shortcuts"><a href={`${base}?view=guides`}>我的指南<IconArrowRight size={13} aria-hidden="true"/></a><a href={`${base}?view=pricing`}>会员方案<IconArrowRight size={13} aria-hidden="true"/></a></div>
+    <div className="library-directory-shortcuts">{!PUBLIC_ONLY && <a href={`${base}?view=guides`}>我的指南<IconArrowRight size={13} aria-hidden="true"/></a>}<a href={`${base}?view=pricing`}>会员方案<IconArrowRight size={13} aria-hidden="true"/></a></div>
     <div className="library-directory-footer"><IconBookmark size={15} aria-hidden="true"/><span>全部原文，免费阅读。</span></div>
   </>;
 
@@ -190,7 +191,7 @@ export function LibraryPage() {
         <Input id="library-query" type="search" maxLength={120} placeholder="搜索建议：离职、押金、睡眠……" value={query} onChange={event => setQuery(event.target.value)}/>
         <NavbarButton as="button" type="submit" className="library-search-submit" variant="secondary">搜索</NavbarButton>
       </form>
-      <nav className="library-header-actions" aria-label="网站导航"><NavbarButton href={base} variant="secondary" className="library-home-link"><IconHome size={18} aria-hidden="true"/><span>首页提问</span></NavbarButton><NavbarButton href={`${base}?view=guides`} variant="secondary" className="library-my-guides">我的指南</NavbarButton><NavbarButton href={`${base}?view=pricing`} variant="secondary" className="library-pricing-link">会员方案</NavbarButton><NavbarButton as="button" type="button" className="outline-button library-account" onClick={openAccount}>{me?.user ? '我的账户' : '登录'}</NavbarButton></nav>
+      <nav className="library-header-actions" aria-label="网站导航"><NavbarButton href={base} variant="secondary" className="library-home-link"><IconHome size={18} aria-hidden="true"/><span>{PUBLIC_ONLY ? '首页' : '首页提问'}</span></NavbarButton>{!PUBLIC_ONLY && <NavbarButton href={`${base}?view=guides`} variant="secondary" className="library-my-guides">我的指南</NavbarButton>}<NavbarButton href={`${base}?view=pricing`} variant="secondary" className="library-pricing-link">会员方案</NavbarButton>{!PUBLIC_ONLY && <NavbarButton as="button" type="button" className="outline-button library-account" onClick={openAccount}>{me?.user ? '我的账户' : '登录'}</NavbarButton>}</nav>
     </NavBody></Navbar>
     <div className="library-page-layout"><Sidebar open={directoryOpen} setOpen={setDirectoryOpen} animate={false}><SidebarBody className="library-page-sidebar">{directory}</SidebarBody></Sidebar>
       <main className="library-reading-main" id="library-reading-main" tabIndex={-1} aria-busy={!corpus && !loadError}>

@@ -1,8 +1,10 @@
 // The membership session is held by the server, never by browser storage.
+import { assertServerFeatures } from './public-mode.mjs';
 const configuredBase = import.meta.env?.VITE_MEMBERSHIP_API_URL;
 const siteBase = import.meta.env?.BASE_URL || '/';
 
 export function membershipApiUrl(path, origin = globalThis.location?.origin) {
+  assertServerFeatures();
   if (!origin) throw new Error('请在网站中使用会员服务。');
   const base = new URL(configuredBase || `${siteBase}api/`, `${origin}/`);
   if (base.origin !== origin) throw new Error('登录与付款需要在本站的安全服务中完成，当前入口尚未开放。');
@@ -11,6 +13,7 @@ export function membershipApiUrl(path, origin = globalThis.location?.origin) {
 }
 
 export async function membershipRequest(path, { method = 'GET', body, signal } = {}) {
+  assertServerFeatures();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort('timeout'), 15000);
   const abort = () => controller.abort(signal?.reason);
