@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Sitemap: https://fangx-ai.github.io/sitemap.xml
+Sitemap: https://fangx-ai.github.io/better-life/sitemap.xml

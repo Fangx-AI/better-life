@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { membershipRequest, validateMembershipStatus, validateMember } from '../../lib/membership-api.mjs';
 import { MEMBERSHIP_PLANS } from '../../../shared/membership-plans.mjs';
 import { paymentReturnOrderId } from '../../lib/payment-return.mjs';
+import { useAnalytics } from '../analytics.jsx';
+import { checkoutReturnOutcome, createCheckoutReturnAnalyticsAttempt } from '../../lib/analytics-flow.mjs';
 
 // Display-only fallback. It never creates a session or grants an entitlement.
 const previewPlans = MEMBERSHIP_PLANS.map(plan => ({ ...plan, purchasable: false }));
@@ -9,10 +11,12 @@ const previewStatus = { available: false, preview: true, enforced: false, loginA
 const MembershipContext = createContext(null);
 
 export function MembershipProvider({ children }) {
+  const track = useAnalytics();
   const [status, setStatus] = useState(previewStatus), [me, setMe] = useState(null), [loading, setLoading] = useState(true), [serviceError, setServiceError] = useState('');
   const [accountOpen, setAccountOpen] = useState(false), [accountView, setAccountView] = useState('auto'), [checkoutPlanId, setCheckoutPlanId] = useState(null);
   const [paymentReturn, setPaymentReturn] = useState(null);
   const paymentRequest = useRef(null), paymentHandled = useRef('');
+  const memberOwner = useRef(me?.user?.id || ''); memberOwner.current = me?.user?.id || '';
   const mounted = useRef(true), request = useRef(0), controller = useRef(null);
   const refresh = useCallback(async () => {
     controller.current?.abort();
@@ -25,6 +29,7 @@ export function MembershipProvider({ children }) {
     ]);
     if (!mounted.current || abort.signal.aborted || sequence !== request.current) return;
     setStatus(catalog.status === 'fulfilled' ? catalog.value : previewStatus);
+    memberOwner.current = member.status === 'fulfilled' ? member.value.user?.id || '' : '';
     setMe(member.status === 'fulfilled' ? member.value : null);
     setServiceError(catalog.status === 'rejected' ? catalog.reason.message : member.status === 'rejected' ? member.reason.message : '');
     setLoading(false);
@@ -48,21 +53,24 @@ export function MembershipProvider({ children }) {
     const key = `${userId}:${orderId}`; if (paymentHandled.current === key) return;
     paymentHandled.current = key;
     const abort = new AbortController(); let settled = false; paymentRequest.current?.abort(); paymentRequest.current = abort;
+    const metrics = createCheckoutReturnAnalyticsAttempt(track, abort.signal);
+    const isCurrent = () => mounted.current && !abort.signal.aborted && paymentRequest.current === abort && memberOwner.current === userId;
     setPaymentReturn(value => ({ ...value, checking: true, error: '', order: null, userId }));
     membershipRequest(`orders/${encodeURIComponent(orderId)}`, { signal: abort.signal }).then(data => {
-      if (!mounted.current || abort.signal.aborted) return;
+      if (!isCurrent()) { metrics.dispose(); return; }
       const member = validateMember(data);
       if (data.order?.id !== orderId || member.user?.id !== userId) throw new Error('账号状态已改变，请刷新后查看订单。');
       settled = true; setMe(member); setPaymentReturn(value => ({ ...value, checking: false, order: data.order }));
-    }).catch(error => { if (mounted.current && !abort.signal.aborted) { settled = true; setPaymentReturn(value => ({ ...value, checking: false, error: error.message })); } });
-    return () => { abort.abort(); if (!settled && paymentHandled.current === key) paymentHandled.current = ''; if (paymentRequest.current === abort) paymentRequest.current = null; };
-  }, [me?.user?.id, paymentReturn?.orderId]);
+      metrics.result(checkoutReturnOutcome(data.order.status));
+    }).catch(error => { if (isCurrent()) { settled = true; setPaymentReturn(value => ({ ...value, checking: false, error: error.message })); metrics.result('error'); } else metrics.dispose(); });
+    return () => { abort.abort(); metrics.dispose(); if (!settled && paymentHandled.current === key) paymentHandled.current = ''; if (paymentRequest.current === abort) paymentRequest.current = null; };
+  }, [me?.user?.id, paymentReturn?.orderId, track]);
   const openAccount = useCallback(() => { setCheckoutPlanId(null); setAccountView('auto'); setAccountOpen(true); }, []);
   const closeAccount = useCallback(() => { paymentRequest.current?.abort(); setPaymentReturn(null); setAccountOpen(false); setCheckoutPlanId(null); setAccountView('auto'); }, []);
   const openCheckout = useCallback(planId => { paymentRequest.current?.abort(); setPaymentReturn(null); setCheckoutPlanId(planId); setAccountView('checkout'); setAccountOpen(true); }, []);
-  const updateMember = useCallback(data => { const member = validateMember(data); controller.current?.abort(); ++request.current; setLoading(false); setServiceError(''); setMe(member); }, []);
-  const acceptLogin = useCallback(data => { const member = validateMember(data); controller.current?.abort(); ++request.current; setLoading(false); setServiceError(''); setMe(member); setAccountView(checkoutPlanId ? 'checkout' : 'auto'); }, [checkoutPlanId]);
-  const logout = useCallback(async () => { paymentRequest.current?.abort(); await membershipRequest('auth/logout', { method: 'POST' }); controller.current?.abort(); ++request.current; setPaymentReturn(null); setMe(null); setAccountView('auto'); setCheckoutPlanId(null); setAccountOpen(false); await refresh(); }, [refresh]);
+  const updateMember = useCallback(data => { const member = validateMember(data); controller.current?.abort(); ++request.current; memberOwner.current = member.user?.id || ''; setLoading(false); setServiceError(''); setMe(member); }, []);
+  const acceptLogin = useCallback(data => { const member = validateMember(data); controller.current?.abort(); ++request.current; memberOwner.current = member.user?.id || ''; setLoading(false); setServiceError(''); setMe(member); setAccountView(checkoutPlanId ? 'checkout' : 'auto'); }, [checkoutPlanId]);
+  const logout = useCallback(async () => { paymentRequest.current?.abort(); await membershipRequest('auth/logout', { method: 'POST' }); controller.current?.abort(); ++request.current; memberOwner.current = ''; setPaymentReturn(null); setMe(null); setAccountView('auto'); setCheckoutPlanId(null); setAccountOpen(false); await refresh(); }, [refresh]);
   const returnedOrder = me?.orders?.find(order => order.id === paymentReturn?.orderId) || (paymentReturn?.userId === me?.user?.id ? paymentReturn?.order : null);
   return <MembershipContext.Provider value={{ status, me, loading, serviceError, refresh, openAccount, closeAccount, openCheckout, accountOpen, accountView, setAccountView, checkoutPlanId, acceptLogin, updateMember, logout,
     paymentReturn: paymentReturn && { ...paymentReturn, order: returnedOrder } }}>{children}</MembershipContext.Provider>;

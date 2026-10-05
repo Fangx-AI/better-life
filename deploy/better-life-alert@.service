@@ -1,0 +1,23 @@
+# Template only. Instance must be an exact supported Better Life unit filename.
+# Example OnFailure=better-life-alert@%n.service; --unit validates the whitelist.
+[Unit]
+Description=Better Life isolated fixed-event failure alert
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=better-life
+Group=better-life
+WorkingDirectory=/var/www/better-life-current
+# Dedicated notification settings; never source shell or pass URL/secret in argv.
+EnvironmentFile=-/etc/better-life/alerts.env
+ExecStart=/usr/bin/node scripts/operations-alert.mjs --unit %i
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/better-life/alerts
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# Never add OnFailure to this alert unit: missing configuration must not recurse.

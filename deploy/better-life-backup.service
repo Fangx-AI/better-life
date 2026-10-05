@@ -1,18 +1,25 @@
-# 模板，尚未安装；新快照在同一调用内完成解密恢复校验。离机存储另行配置。
+# 独立维护单元；生产安装记录见PRODUCTION-RELEASE.md。离机存储另行配置。
 [Unit]
 Description=Better Life encrypted SQLite online backup and restore check
 After=network.target
+OnFailure=better-life-alert@%n.service
 
 [Service]
 Type=oneshot
 User=better-life
 Group=better-life
 WorkingDirectory=/var/www/better-life-current
-EnvironmentFile=/etc/better-life/production.env
+EnvironmentFile=/etc/better-life/backup.env
+EnvironmentFile=-/etc/better-life/alerts.env
 ExecStart=/usr/bin/node scripts/membership-backup.mjs create
+# Notification failure must not turn a successful verified backup into failure.
+ExecStartPost=-/usr/bin/node scripts/operations-alert.mjs RECOVERED backup
+TimeoutStartSec=300
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
 ReadWritePaths=/var/lib/better-life /var/backups/better-life
+RestrictSUIDSGID=true
+LockPersonality=true

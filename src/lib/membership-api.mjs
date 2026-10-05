@@ -63,6 +63,14 @@ export function validateMember(data) {
   return data;
 }
 
+export function validateOrderHistory(data, ownerId, { status = 'all', limit = 20 } = {}) {
+  const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(value);
+  const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value));
+  const validOrder = order => order && validId(order.id) && typeof order.planName === 'string' && order.planName.length > 0 && order.planName.length <= 100 && Number.isSafeInteger(order.amountFen) && order.amountFen >= 0 && order.currency === 'CNY' && ['created', 'pending', 'paid', 'failed', 'expired', 'refunded'].includes(order.status) && (status !== 'paid' || order.status === 'paid') && validDate(order.createdAt);
+  if (!['all', 'paid'].includes(status) || !Number.isSafeInteger(limit) || limit < 1 || limit > 50 || !validId(ownerId) || data?.ownerId !== ownerId || !Array.isArray(data.items) || data.items.length > limit || !data.items.every(validOrder) || new Set(data.items.map(order => order.id)).size !== data.items.length || data.nextCursor !== null && (!validId(data.nextCursor) || data.items.length !== limit || data.nextCursor !== data.items.at(-1)?.id)) throw new Error('订单记录暂时无法核对，请刷新后重试。');
+  return data;
+}
+
 export function authIdentity(channel, value) {
   if (channel === 'email') {
     const email = String(value || '').trim().toLowerCase();

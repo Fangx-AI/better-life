@@ -9,6 +9,10 @@ test('SEO: preserve the already-public Pages canonical; explicit domain/base pat
   const defaults = seoArtifacts();
   assert.equal(defaults.config.siteUrl, 'https://fangx-ai.github.io/better-life/');
   assert.match(defaults.head, /name="robots" content="index,follow"/);
+  const localRoot = seoArtifacts({ PUBLIC_BASE_PATH: '/' });
+  assert.equal(localRoot.config.basePath, '/');
+  assert.equal(localRoot.config.siteUrl, 'https://fangx-ai.github.io/better-life/');
+  assert.match(localRoot.sitemap, /https:\/\/fangx-ai.github.io\/better-life\//);
   const custom = seoArtifacts({ PUBLIC_SITE_ORIGIN: 'https://better-life.example.test', PUBLIC_BASE_PATH: '/' });
   assert.match(custom.head, /rel="canonical" href="https:\/\/better-life.example.test\/"/);
   assert.match(custom.robots, /Sitemap: https:\/\/better-life.example.test\/sitemap.xml/);

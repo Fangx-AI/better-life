@@ -9,6 +9,8 @@ import { BentoGrid, BentoGridItem } from './components/ui/bento-grid';
 import { guideLocationHref, entryLocationHref } from './lib/guide-location.mjs';
 import { ReaderContent } from './components/reader-content';
 import { useMembership } from './components/membership/membership-context.jsx';
+import { useAnalytics } from './components/analytics.jsx';
+import { trackOptionalAnalytics } from './lib/analytics-flow.mjs';
 
 const base = import.meta.env.BASE_URL;
 const media = name => `${base}media/${name}.webp`;
@@ -36,6 +38,7 @@ function Brand() {
 }
 
 export function App() {
+  const track = useAnalytics();
   const { openAccount, me } = useMembership();
   const [highlighted, setHighlighted] = useState([]), [questionRequest, setQuestionRequest] = useState(null);
   const [saved, setSaved] = useState(initialSaved), [corpus, setCorpus] = useState(null);
@@ -50,7 +53,7 @@ export function App() {
     return () => controller.abort();
   }, [reload]);
 
-  const openEntry = entry => window.location.assign(entryLocationHref(base, entry));
+  const openEntry = (entry, source) => { trackOptionalAnalytics(track, 'reader_open', { source }); window.location.assign(entryLocationHref(base, entry)); };
   const toggleSaved = entry => {
     const next = new Set(saved);
     if (next.has(entry.id)) next.delete(entry.id); else next.add(entry.id);
@@ -102,8 +105,8 @@ export function App() {
       <section id="scenes" className="scene-section page-width" aria-label="按场景查指南"><BentoGrid className="scene-grid">
         {scenes.map(scene => <BentoGridItem key={scene.chapter} as="a" href={guideLocationHref(base, { chapter: String(scene.chapter) })} className="scene-card" aria-label={`查看${scene.title}`} header={<><img src={media(scene.image)} width="1245" height="624" alt=""/><span className="scene-shade"/></>} title={<h2>{scene.title}</h2>} description={<><p>{scene.description}</p><span className="scene-next"><IconChevronRight size={18}/></span></>}/>)}
       </BentoGrid></section>
-      <KnowledgeMap corpus={corpus} onOpen={openEntry} highlighted={highlighted}/>
-      <AnswerShowcase corpus={corpus} onOpen={openEntry} onAsk={text => setQuestionRequest({ text, nonce: Date.now() })}/>
+      <KnowledgeMap corpus={corpus} onOpen={entry => openEntry(entry, 'graph')} highlighted={highlighted}/>
+      <AnswerShowcase corpus={corpus} onOpen={entry => openEntry(entry, 'showcase')} onAsk={text => setQuestionRequest({ text, nonce: Date.now() })}/>
       <div className="browse-invitation page-width"><NavbarButton href={libraryHref} className="outline-button">查看全部 {corpus?.counts.entries || 650} 条建议 <IconArrowRight size={18}/></NavbarButton></div>
       <section id="formats" className="book-section">
         <img className="book-photograph" src={media('knowledge-book')} width="1774" height="887" loading="lazy" alt="书桌上的人生指南书页与 Obsidian 关系图示意"/>

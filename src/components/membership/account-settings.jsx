@@ -3,7 +3,7 @@ import { NavbarButton } from '../ui/resizable-navbar';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { useMembership } from './membership-context';
-import { membershipRequest, formatMoney, formatMemberDate, safeCheckoutUrl } from '../../lib/membership-api.mjs';
+import { membershipRequest, validateOrderHistory, formatMoney, formatMemberDate, safeCheckoutUrl } from '../../lib/membership-api.mjs';
 import './account-settings.css';
 
 const base = import.meta.env.BASE_URL;
@@ -19,15 +19,18 @@ function validTicket(ticket, userId) { return ticket && validId(ticket.id) && va
 export function AccountSettings() {
   const { me, status, refresh, closeAccount, setAccountView } = useMembership();
   const userId = me?.user?.id, isDemo = me?.user?.authentication === 'local-demo';
-  const paidOrders = (me?.orders || []).filter(order => order.status === 'paid' && validId(order.id));
-  const paidOrderKey = paidOrders.map(order => order.id).join('|'), refundAvailable = status.refundRequestsAvailable === true;
+  const refundAvailable = status.refundRequestsAvailable === true;
+  const meOrderRevision = (me?.orders || []).map(order => `${order.id}:${order.status}:${order.refundState}`).join('|');
   const supportUrl = safeCheckoutUrl(status.supportUrl), id = useId();
   const [stateOwner, setStateOwner] = useState(userId), [orderId, setOrderId] = useState(''), [reason, setReason] = useState('other'), [requests, setRequests] = useState([]);
   const [refundLoading, setRefundLoading] = useState(false), [refundBusy, setRefundBusy] = useState(false), [refundError, setRefundError] = useState(''), [refundNotice, setRefundNotice] = useState(''), [refundReload, setRefundReload] = useState(0);
+  const [orderItems, setOrderItems] = useState([]), [orderNextCursor, setOrderNextCursor] = useState(null), [ordersLoaded, setOrdersLoaded] = useState(false), [ordersLoading, setOrdersLoading] = useState(false), [ordersError, setOrdersError] = useState(''), [ordersReload, setOrdersReload] = useState(0);
   const [deleteOpen, setDeleteOpen] = useState(false), [accountStatus, setAccountStatus] = useState(null), [statusLoading, setStatusLoading] = useState(false), [statusReload, setStatusReload] = useState(0);
   const [confirmation, setConfirmation] = useState(''), [deleteBusy, setDeleteBusy] = useState(false), [deleteError, setDeleteError] = useState(''), [clock, setClock] = useState(Date.now());
-  const mounted = useRef(true), owner = useRef(userId), listController = useRef(null), refundController = useRef(null), statusController = useRef(null), deleteController = useRef(null), refundLock = useRef(false), deleteLock = useRef(false);
+  const mounted = useRef(true), owner = useRef(userId), listController = useRef(null), orderController = useRef(null), refundController = useRef(null), statusController = useRef(null), deleteController = useRef(null), ordersLock = useRef(false), refundLock = useRef(false), deleteLock = useRef(false);
   owner.current = userId;
+  const paidOrders = stateOwner === userId ? orderItems.filter(order => order.status === 'paid' && validId(order.id)) : [];
+  const paidOrderKey = paidOrders.map(order => order.id).join('|');
   const loginAgain = useCallback(() => setAccountView('login'), [setAccountView]);
   const reportError = useCallback((failure, display) => {
     if (failure.name === 'AbortError') return;
@@ -36,12 +39,23 @@ export function AccountSettings() {
   }, [loginAgain]);
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; for (const controller of [listController, refundController, statusController, deleteController]) controller.current?.abort(); };
+    return () => { mounted.current = false; for (const controller of [listController, orderController, refundController, statusController, deleteController]) controller.current?.abort(); };
   }, []);
   useEffect(() => {
-    setStateOwner(userId); setRequests([]); setRefundError(''); setRefundNotice(''); setRefundBusy(false); setAccountStatus(null); setConfirmation(''); setDeleteError(''); setDeleteBusy(false); refundLock.current = false; deleteLock.current = false;
-    return () => { for (const controller of [listController, refundController, statusController, deleteController]) controller.current?.abort(); };
+    setStateOwner(userId); setRequests([]); setOrderItems([]); setOrderNextCursor(null); setOrdersLoaded(false); setOrdersError(''); setRefundError(''); setRefundNotice(''); setRefundBusy(false); setAccountStatus(null); setConfirmation(''); setDeleteError(''); setDeleteBusy(false); ordersLock.current = false; refundLock.current = false; deleteLock.current = false;
+    return () => { for (const controller of [listController, orderController, refundController, statusController, deleteController]) controller.current?.abort(); };
   }, [userId]);
+  useEffect(() => {
+    if (!userId || isDemo) { setOrdersLoading(false); return; }
+    const abort = new AbortController(); orderController.current?.abort(); orderController.current = abort; ordersLock.current = true; setOrdersLoading(true); setOrdersLoaded(false); setOrdersError(''); setOrderItems([]); setOrderNextCursor(null);
+    membershipRequest('orders?status=paid&limit=20', { signal: abort.signal }).then(data => {
+      if (abort.signal.aborted || owner.current !== userId) return;
+      const page = validateOrderHistory(data, userId, { status: 'paid' });
+      setOrderItems(page.items); setOrderNextCursor(page.nextCursor); setOrdersLoaded(true);
+    }).catch(failure => { if (!abort.signal.aborted && owner.current === userId) reportError(failure, setOrdersError); })
+      .finally(() => { if (!abort.signal.aborted && owner.current === userId) { ordersLock.current = false; setOrdersLoading(false); } });
+    return () => abort.abort();
+  }, [userId, isDemo, ordersReload, meOrderRevision, reportError]);
   useEffect(() => { if (!paidOrders.some(order => order.id === orderId)) setOrderId(paidOrders[0]?.id || ''); }, [paidOrderKey, orderId]);
   useEffect(() => {
     if (!userId || !refundAvailable || isDemo) { setRefundLoading(false); return; }
@@ -76,6 +90,18 @@ export function AccountSettings() {
   const hasOpenRequest = visibleRequests.some(ticket => ticket.orderId === orderId && openStates.includes(ticket.state));
   const fresh = currentState && accountStatus?.freshAuthentication === true && Date.parse(accountStatus.expiresAt) > clock;
   const canDelete = currentState && !isDemo && fresh && accountStatus?.canDelete === true && accountStatus.deletionBlockers.length === 0;
+  const loadOlderOrders = async () => {
+    if (!currentState || !orderNextCursor || isDemo || ordersLock.current) return;
+    const cursor = orderNextCursor, abort = new AbortController(); orderController.current?.abort(); orderController.current = abort; ordersLock.current = true; setOrdersLoading(true); setOrdersError('');
+    try {
+      const data = await membershipRequest(`orders?status=paid&limit=20&cursor=${encodeURIComponent(cursor)}`, { signal: abort.signal });
+      if (abort.signal.aborted || !mounted.current || owner.current !== userId) return;
+      const page = validateOrderHistory(data, userId, { status: 'paid' });
+      if (page.nextCursor === cursor) throw new Error('订单记录暂时无法核对，请刷新后重试。');
+      setOrderItems(value => [...value, ...page.items.filter(order => !value.some(existing => existing.id === order.id))]); setOrderNextCursor(page.nextCursor);
+    } catch (failure) { if (!abort.signal.aborted && mounted.current && owner.current === userId) reportError(failure, setOrdersError); }
+    finally { if (!abort.signal.aborted && mounted.current && owner.current === userId) { ordersLock.current = false; setOrdersLoading(false); } }
+  };
   const submitRefund = async event => {
     event.preventDefault();
     if (!currentState || !refundAvailable || isDemo || !paidOrders.some(order => order.id === orderId) || !Object.hasOwn(reasons, reason) || refundLock.current || hasOpenRequest) return;
@@ -104,20 +130,23 @@ export function AccountSettings() {
   };
   if (!userId) return null;
   return <div className="account-settings">
-    <section className="account-settings-refunds" aria-labelledby={`${id}-refund-title`} aria-busy={refundLoading || refundBusy}>
-      <div className="account-settings-heading"><h3 id={`${id}-refund-title`}>退款申请</h3>{refundAvailable && !isDemo && <NavbarButton as="button" type="button" variant="secondary" disabled={refundBusy || refundLoading} onClick={() => setRefundReload(value => value + 1)}>刷新记录</NavbarButton>}</div>
+    <section className="account-settings-refunds" aria-labelledby={`${id}-refund-title`} aria-busy={refundLoading || refundBusy || ordersLoading}>
+      <div className="account-settings-heading"><h3 id={`${id}-refund-title`}>退款申请</h3>{!isDemo && <NavbarButton as="button" type="button" variant="secondary" disabled={refundBusy || refundLoading || ordersLoading} onClick={() => { setRefundReload(value => value + 1); setOrdersReload(value => value + 1); }}>刷新记录</NavbarButton>}</div>
       <p className="account-settings-note">这里只登记申请。审核批准不等于退款到账，不会自动调用退款网关。</p>
       {!refundAvailable && <p className="account-settings-state" role="status">退款申请暂未开放。已支付订单仍保留；{supportUrl ? '可通过下方客服入口联系。' : '本站尚未配置客服入口。'}</p>}
       {paidOrders.length > 0 ? <form onSubmit={submitRefund} className="account-settings-form">
         <Label htmlFor={`${id}-refund-order`}>选择已支付订单</Label>
         <select id={`${id}-refund-order`} name="refund-order" value={orderId} onChange={event => { setOrderId(event.target.value); setRefundError(''); setRefundNotice(''); }} disabled={refundBusy || isDemo}>
-          {paidOrders.map(order => <option key={order.id} value={order.id}>{order.planName || '已支付订单'} · {money(order.amountFen)} · 尾号 {order.id.slice(-8)}</option>)}
+          {paidOrders.map(order => <option key={order.id} value={order.id}>{order.planName || '已支付订单'} · {money(order.amountFen)} · {formatMemberDate(order.paidAt || order.createdAt)} · 尾号 {order.id.slice(-8)}</option>)}
         </select>
         <Label htmlFor={`${id}-refund-reason`}>申请原因</Label>
         <select id={`${id}-refund-reason`} name="refund-reason" value={reason} onChange={event => setReason(event.target.value)} disabled={!refundAvailable || refundBusy || isDemo}>{Object.entries(reasons).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
         {hasOpenRequest && <p className="account-settings-note" role="status">该订单已有处理中申请，不必重复提交。</p>}
         <NavbarButton as="button" type="submit" className="outline-button" aria-live="polite" disabled={!currentState || !refundAvailable || refundBusy || refundLoading || isDemo || !orderId || hasOpenRequest}>{refundBusy ? '正在提交申请……' : '提交退款申请'}</NavbarButton>
-      </form> : <p className="account-settings-note">没有可申请的已支付订单。</p>}
+      </form> : ordersLoaded && !ordersLoading && !ordersError ? <p className="account-settings-note">没有可申请的已支付订单。</p> : null}
+      {ordersLoading && <p className="account-settings-state" role="status">正在读取已支付订单……</p>}
+      {currentState && orderNextCursor && <NavbarButton as="button" type="button" variant="secondary" className="account-settings-orders-more" disabled={ordersLoading || refundBusy} onClick={loadOlderOrders}>加载更早的已支付订单</NavbarButton>}
+      {ordersError && <div className="account-settings-orders-error"><p className="account-settings-error" role="alert">{ordersError}</p><NavbarButton as="button" type="button" variant="secondary" disabled={ordersLoading || refundBusy} onClick={() => setOrdersReload(value => value + 1)}>重新读取订单</NavbarButton></div>}
       {refundLoading && <p className="account-settings-state" role="status">正在读取申请记录……</p>}
       {visibleRequests.length > 0 && <ul className="account-settings-requests" aria-label="我的退款申请">{visibleRequests.map(ticket => <li key={ticket.id}><div><b>{requestStates[ticket.state]}</b><small>订单尾号 {ticket.orderId.slice(-8)} · {money(ticket.amountFen)} · {reasons[ticket.reasonCode]}</small><small>{formatMemberDate(ticket.updatedAt || ticket.createdAt)}</small></div></li>)}</ul>}
       {refundNotice && <p className="account-settings-state" role="status">{refundNotice}</p>}{refundError && <p className="account-settings-error" role="alert">{refundError}</p>}

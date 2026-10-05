@@ -336,6 +336,14 @@ export function createMembershipHandler({ env = {}, store = createMembershipStor
         const result = operationsStore.submitRefundRequest(user, body);
         return json(result, result.created ? 201 : 200);
       }
+      if (path === '/api/orders' && request.method === 'GET') {
+        const user = requireUser(request), params = new URL(request.url).searchParams;
+        const allowed = ['status', 'limit', 'cursor'];
+        if ([...params.keys()].some(key => !allowed.includes(key) || params.getAll(key).length !== 1)) error(400, 'invalid_order_history', '订单列表参数无效，请刷新后重试。');
+        const limit = params.has('limit') ? params.get('limit') : '20';
+        if (!/^[1-9]\d?$/.test(limit)) error(400, 'invalid_order_history', '订单列表参数无效，请刷新后重试。');
+        return json(store.orderHistory(user, { status: params.get('status') ?? 'all', limit: Number(limit), cursor: params.get('cursor') }));
+      }
       if (path === '/api/orders' && request.method === 'POST') {
         const user = requireUser(request);
         if (!checkoutAvailable) error(503, 'checkout_not_configured', '付款尚未开放，当前不会创建收费订单或扣款。');

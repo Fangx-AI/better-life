@@ -25,6 +25,9 @@ export function releasePathAllowed(path) {
   if (segments.some(segment => !segment || segment === '.' || segment === '..' || /[ .]$/.test(segment) || segment.includes(':') || forbiddenSegments.test(segment))) return false;
   if (forbiddenExtension.test(path) || forbiddenCredentialName.test(segments.at(-1))) return false;
   if (path === '.openai/hosting.json' || path === 'public/.nojekyll') return true;
+  // One reviewed Windows maintenance source is required by the offline test
+  // suite; do not allow arbitrary PowerShell programs or their secret output.
+  if (path === 'scripts/offsite-backup-pull.ps1') return true;
   if (segments.some(segment => segment.startsWith('.'))) return false;
   if (segments.length === 1) return topFiles.has(path);
   return roots.has(segments[0]) && (extensions.has(extname(path).toLowerCase()) || /^(LICENSE(?:-CODE|-CONTENT)?)$/.test(segments.at(-1)));

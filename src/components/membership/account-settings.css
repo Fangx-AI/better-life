@@ -14,6 +14,7 @@
 .account-settings select:focus-visible,.account-settings input:focus-visible{outline:2px solid var(--coral,#d75941);outline-offset:2px}
 .account-settings .account-settings-form>div{max-width:100%;min-width:0}
 .account-settings .account-settings-form .button{min-height:44px;max-width:100%;white-space:normal;line-height:1.5;font-size:13px;box-shadow:none}
+.account-settings .account-settings-orders-more,.account-settings .account-settings-orders-error .button{min-height:44px;max-width:100%;white-space:normal;font-size:12px;padding:8px 0;color:#965b48}
 .account-settings .button:disabled,.account-settings select:disabled,.account-settings input:disabled{cursor:not-allowed;opacity:.55;transform:none}
 .account-settings .account-settings-requests{list-style:none;padding:0;margin:15px 0 0;display:grid;gap:10px}
 .account-settings .account-settings-requests li{border:1px solid #eee7e2;background:#fdfaf7;border-radius:10px;padding:12px}

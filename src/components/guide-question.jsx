@@ -13,6 +13,7 @@ import { SaveAnswer } from './save-answer';
 import { QaNotice } from './qa-notice';
 import { useMembership } from './membership/membership-context.jsx';
 import { useAnalytics } from './analytics.jsx';
+import { createQaAnalyticsAttempt } from '../lib/analytics-flow.mjs';
 import { createQaRequestGate, previewQaStep } from '../lib/qa-request-gate.mjs';
 import { sendConversationQuestion } from '../lib/qa-conversation-request.mjs';
 import { guideLocationHref } from '../lib/guide-location.mjs';
@@ -84,6 +85,7 @@ export function GuideQuestion({ corpus, loadError, renderSource, onResult, quest
     const text = value.trim();
     if (!text || !corpus || loadError) return;
     const request = gate.current.begin(), signal = request.controller.signal, requestOwner = ownerRef.current;
+    const metrics = createQaAnalyticsAttempt(track, 'public', signal);
     setConversationOwner(requestOwner); setDraft(text); setFollowup(''); setQuestion(text); setError(''); setBusy(true);
     requestAnimationFrame(() => {
       if (gate.current.isCurrent(request)) (pendingPanel.current || panel.current)?.scrollIntoView({ behavior: motionBehavior(), block: 'nearest' });
@@ -93,7 +95,7 @@ export function GuideQuestion({ corpus, loadError, renderSource, onResult, quest
       const signature = JSON.stringify(payload);
       if (!retryKey.current || retryKey.current.signature !== signature) retryKey.current = { signature, id: crypto.randomUUID() };
       payload.requestId = retryKey.current.id;
-      track('qa_submit', { kind: 'public' });
+      metrics.start();
       const { response, data, requestId } = await sendConversationQuestion(api, payload, { signal,
         isCurrent: () => gate.current.isCurrent(request) && ownerRef.current === requestOwner,
         onRequestId: id => { if (retryKey.current?.signature === signature) retryKey.current.id = id; },
@@ -106,7 +108,7 @@ export function GuideQuestion({ corpus, loadError, renderSource, onResult, quest
         throw new Error(data?.error?.message || '暂时没能回答，请再试一次。');
       }
       const result = validateQaResponse(data, corpus);
-      track('qa_result', { kind: 'public', outcome: result.status === 'answered' ? 'success' : 'unavailable' });
+      metrics.result(result.status === 'answered' ? 'success' : 'unavailable');
       const turn = { id: requestId, question: text, result };
       turnsRef.current = [...turnsRef.current, turn].slice(-20); setTurns(turnsRef.current);
       setDraft(''); setQuestion(''); onResult?.(result.sources.map(entry => entry.id)); retryKey.current = null;
@@ -114,9 +116,9 @@ export function GuideQuestion({ corpus, loadError, renderSource, onResult, quest
       requestAnimationFrame(() => document.getElementById(followupId)?.focus({ preventScroll: true }));
     } catch (value) {
       if (!gate.current.isCurrent(request) || ownerRef.current !== requestOwner) return;
-      track('qa_result', { kind: 'public', outcome: signal.aborted ? 'cancelled' : 'error' });
+      metrics.result(signal.aborted ? 'cancelled' : 'error');
       setError(signal.aborted && signal.reason === 'timeout' ? '这次等得有点久，可以再试一次。' : value.message || '连接失败，请再试一次。');
-    } finally { if (gate.current.finish(request)) setBusy(false); }
+    } finally { metrics.dispose(); if (gate.current.finish(request)) setBusy(false); }
   }, [corpus, loadError, onResult, openAccount, refresh, membershipStatus.enforced, followupId, track]);
 
   useEffect(() => {

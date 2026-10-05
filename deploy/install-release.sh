@@ -35,6 +35,6 @@ VERIFIER="$SCRIPT_DIRECTORY/../scripts/release-manifest.mjs"
 [[ -f "$VERIFIER" && ! -L "$VERIFIER" ]] || fail
 node "$VERIFIER" stage --bundle "$BUNDLE" --destination "$TARGET" --expected-sha256 "$MANIFEST_SHA256" || fail
 printf '%s\n' '仅完成Better Life离线源码dry-stage；没有部署或上线。'
-printf '%s\n' '后续激活尚未实现，必须先人工验收：独立真实域名/TLS证书、root-only专用env、生产build+tests、preflight、空闲4178端口、候选回环health、仅better-life.service原子切换/rollback、新独立Nginx文件与nginx -t。'
+printf '%s\n' '此入口仍只做源码暂存。完整发布预检/激活/回滚使用已审核的scripts/release-activation.mjs，具体见docs/RELEASE-ACTIVATION.md；须有root-only专用env和真实独立域名/TLS才能激活。'
 # 禁止在此模板添加 source 原站env、停Image2、覆盖已有server、自动升级依赖或开启新单。
-# --activate 不受支持；未来实现前不得把此脚本改名冒充完整原子deploy。
+# 此 dry-stage 脚本仍不接受 --activate，不把源码暂存冒充正式发布。

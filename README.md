@@ -82,7 +82,7 @@ PDF、EPUB、离线 HTML 的下载来自原作者的发布页，可能比本项�
 - [x] PDF / EPUB / 离线版本入口
 - [ ] **在线问答**：直接提问，回答附对应条目和出处
 - [x] **Obsidian 知识库**：下载后直接打开，带目录、双链与分色关系图
-- [ ] **一页场景清单**：好保存、好打印、好转发
+- [x] **一页场景清单**：租房、离职、反冲动购物三份已制作，尚未公开部署或推广发布
 
 Obsidian Vault 已生成，可下载仓库中的 ZIP。DeepSeek 问答已在本地完成真实接口验证，公网问答仍需独立 HTTPS 服务端。[反馈使用问题 →](https://github.com/Fangx-AI/better-life/issues/new/choose)
 

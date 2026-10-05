@@ -1,4 +1,4 @@
-# 模板，尚未安装/开启；每天北京时间03:00，首次启用前手动完成一次备份验收。
+# 每天北京时间03:00；首次启用前手动完成一次备份验收，不能据模板宣称已启用。
 [Unit]
 Description=Better Life daily encrypted backup
 

@@ -33,6 +33,19 @@ test('release bundle: env/output/log/key/database/authentication files and opaqu
   assert.equal(readFileSync(join(h.bundle, 'release-manifest.json'), 'utf8').includes('fixture-private-content'), false); assert.equal(result.fileCount, 12);
 });
 
+test('release bundle: only the reviewed offsite PowerShell source is included, never arbitrary PS or private output', t => {
+  const h = fixture(t);
+  h.put('scripts/offsite-backup-pull.ps1', '# public reviewed source');
+  h.put('scripts/unknown-maintenance.ps1', '# unreviewed source');
+  h.put('output/offsite-private.ps1', '# private output');
+  const result = createReleaseBundle({ source: h.source, destination: h.bundle, releaseId: 'fixture-windows-source' });
+  assert.equal(result.fileCount, 13);
+  assert.equal(releasePathAllowed('scripts/offsite-backup-pull.ps1'), true);
+  assert.equal(existsSync(join(h.bundle, 'scripts/offsite-backup-pull.ps1')), true);
+  assert.equal(existsSync(join(h.bundle, 'scripts/unknown-maintenance.ps1')), false);
+  assert.equal(existsSync(join(h.bundle, 'output/offsite-private.ps1')), false);
+});
+
 test('release bundle: exact public hosting/build inputs remain present while every other hidden tool file is excluded', t => {
   const h = fixture(t);
   h.put('.openai/credentials.json', 'must-not-read-or-copy-fixture-credential');

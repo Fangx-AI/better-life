@@ -16,5 +16,8 @@ export function publicSiteConfig(env = {}) {
   catch { throw new Error('PUBLIC_SITE_ORIGIN 必须是无路径的安全站点 origin。'); }
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
   if (url.username || url.password || url.pathname !== '/' || url.search || url.hash || url.protocol !== 'https:' && !(url.protocol === 'http:' && local && !indexing) || local && indexing) throw new Error('PUBLIC_SITE_ORIGIN 必须是 HTTPS origin；本机 HTTP 仅允许 noindex 预演。');
-  return Object.freeze({ origin: url.origin, basePath, siteUrl: `${url.origin}${basePath}`, indexing });
+  // A local root-path build changes resource URLs, not the already-public Pages
+  // identity. Only an explicit public origin may select a different canonical base.
+  const canonicalBase = env.PUBLIC_SITE_ORIGIN ? basePath : '/better-life/';
+  return Object.freeze({ origin: url.origin, basePath, siteUrl: `${url.origin}${canonicalBase}`, indexing });
 }

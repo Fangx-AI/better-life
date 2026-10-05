@@ -6,6 +6,7 @@ import { BentoGrid } from '../ui/bento-grid';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { useMembership } from '../membership/membership-context';
+import { useAnalytics } from '../analytics';
 import { membershipRequest, membershipApiUrl, formatMemberDate } from '../../lib/membership-api.mjs';
 import { loadGuides, savePersonalGuide, exportPersonalGuide, validateGuide, isCurrentGuideOwner } from '../../lib/personal-guide-api.mjs';
 import { validateQaResponse } from '../../lib/qa-response.mjs';
@@ -71,14 +72,19 @@ function VersionHistory({ guide, onSaved }) {
 }
 
 function GuideEditor({ guide, profile, corpus, corpusLoading, onSaved, onBack, onDelete, onPendingChange }) {
-  const { refresh, openAccount } = useMembership();
+  const { me, refresh, openAccount } = useMembership();
+  const track = useAnalytics(), requestOwner = me?.user?.id || '', ownerRef = useRef(requestOwner);
+  ownerRef.current = requestOwner;
   const [editing, setEditing] = useState(false), [values, setValues] = useState(guide), [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState(''), [newTask, setNewTask] = useState(''), [deleteConfirm, setDeleteConfirm] = useState(false);
   const [question, setQuestion] = useState(''), [asking, setAsking] = useState(false), [answer, setAnswer] = useState(null), [draft, setDraft] = useState(null), [selectedFacts, setSelectedFacts] = useState(guide.factIds.filter(id => profile.facts.some(fact => fact.id === id))), [compare, setCompare] = useState(false);
-  const controller = useRef(null), questionRequest = useRef(null), id = useId();
+  const controller = useRef(null), questionRequest = useRef(null), activeQuestion = useRef(null), mounted = useRef(true), id = useId();
   const editDirty = editing && ['title', 'topic', 'content'].some(key => values[key] !== guide[key]);
   const clearPending = usePendingChanges('editor', Boolean(editDirty || draft || newTask.trim() || question.trim() || busy || asking), onPendingChange);
   useEffect(() => { if (!editing) setValues(guide); }, [guide, editing]);
-  useEffect(() => () => controller.current?.abort(), []);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; activeQuestion.current?.abort.abort('unmounted'); activeQuestion.current = null; controller.current = null; };
+  }, [requestOwner]);
   const save = async (next = values, draftConfirm = false) => {
     if (draftConfirm && next.baseRevision !== guide.revision) { setError('你在生成更新稿后修改过这篇指南。请保留当前版本，重新提问生成新稿，避免覆盖刚刚做过的修改。'); return false; }
     setBusy(true); setError(''); setNotice('');
@@ -91,22 +97,32 @@ function GuideEditor({ guide, profile, corpus, corpusLoading, onSaved, onBack, o
   const download = async () => { setError(''); try { const blob = await exportPersonalGuide(guide.id); const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = `${guide.title.replace(/[<>:"/\\|?*]/g, '-')}.md`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); } catch (e) { setError(e.message); } };
   const remove = async () => { setBusy(true); setError(''); try { const data = await membershipRequest(`guides/${encodeURIComponent(guide.id)}`, { method: 'DELETE' }); if (!data.ok) throw new Error('删除未完成，请重试。'); onDelete(guide.id); } catch (e) { setError(e.message); } finally { setBusy(false); } };
   const ask = async event => {
-    event.preventDefault(); if (!question.trim() || asking || !corpus) return;
+    event.preventDefault(); if (!question.trim() || asking || activeQuestion.current || !corpus || !requestOwner) return;
     if (draft && !window.confirm('当前更新稿还没有保存。重新提问会替换它，继续吗？')) return;
     setAsking(true); setError(''); setAnswer(null); setDraft(null); setNotice('');
     const key = `${guide.id}:${guide.revision}:${question.trim()}:${selectedFacts.join(',')}`;
     if (questionRequest.current?.key !== key) questionRequest.current = { key, id: crypto.randomUUID() };
-    const abort = new AbortController(); controller.current = abort; const timer = setTimeout(() => abort.abort('timeout'), 60000);
+    const abort = new AbortController(), request = { abort, owner: requestOwner }; controller.current = abort; activeQuestion.current = request;
+    const isCurrent = () => mounted.current && activeQuestion.current === request && ownerRef.current === request.owner;
+    // One fixed result per dispatched request; aborts finish immediately even if
+    // a transport ignores cancellation. No account, guide, question or URL data.
+    let reported = false;
+    const report = outcome => { if (reported) return; reported = true; try { track('qa_result', { kind: 'personal', outcome }); } catch { /* Optional statistics cannot break asking. */ } };
+    const onAbort = () => report('cancelled'); abort.signal.addEventListener('abort', onAbort, { once: true });
+    const timer = setTimeout(() => abort.abort('timeout'), 60000);
     try {
+      try { track('qa_submit', { kind: 'personal' }); } catch { /* Optional statistics cannot break asking. */ }
       const response = await fetch(membershipApiUrl(`guides/${encodeURIComponent(guide.id)}/ask`), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: question.trim(), requestId: questionRequest.current.id, factIds: selectedFacts }), signal: abort.signal });
+      if (!isCurrent()) return; abort.signal.throwIfAborted();
       const data = await response.json().catch(() => null);
+      if (!isCurrent()) return; abort.signal.throwIfAborted();
       if (!response.ok) { if (response.status === 401) openAccount(); if (data?.error?.code !== 'request_pending') questionRequest.current = null; const failed = new Error(['request_released', 'request_expired'].includes(data?.error?.code) ? '上次回答未完成或已过期，本篇指南没有改动。现在可以重新提问。' : data?.error?.message || '这次提问未能完成，请重试。'); failed.status = response.status; throw failed; }
-      const checked = validateQaResponse(data, corpus); setAnswer(checked);
+      const checked = validateQaResponse(data, corpus); report(checked.status === 'answered' ? 'success' : 'unavailable'); setAnswer(checked);
       if (checked.status === 'insufficient') questionRequest.current = null;
       if (checked.status !== 'insufficient' && data.draft && typeof data.draft.content === 'string' && Array.isArray(data.draft.tasks) && Array.isArray(data.draft.sourceIds)) setDraft({ ...guide, ...data.draft, baseRevision: guide.revision, factIds: [...selectedFacts], tasks: [...guide.tasks, ...data.draft.tasks.filter(task => !guide.tasks.some(item => item.id === task.id)).map(task => ({ ...task, done: false }))] });
       await refresh();
-    } catch (e) { if (!abort.signal.aborted) setError(e instanceof TypeError ? '连接失败，请检查网络后重试。本篇指南没有被修改。' : e.message); else setError(abort.signal.reason === 'timeout' ? '回答等待太久，本篇指南没有被修改。可以重试。' : '已停止回答，本篇指南没有被修改。'); }
-    finally { clearTimeout(timer); setAsking(false); }
+    } catch (e) { if (!isCurrent()) return; report(abort.signal.aborted ? 'cancelled' : 'error'); if (!abort.signal.aborted) setError(e instanceof TypeError ? '连接失败，请检查网络后重试。本篇指南没有被修改。' : e.message); else setError(abort.signal.reason === 'timeout' ? '回答等待太久，本篇指南没有被修改。可以重试。' : '已停止回答，本篇指南没有被修改。'); }
+    finally { clearTimeout(timer); abort.signal.removeEventListener('abort', onAbort); if (activeQuestion.current === request) { activeQuestion.current = null; controller.current = null; if (mounted.current && ownerRef.current === request.owner) setAsking(false); } }
   };
   const completed = guide.tasks.filter(task => task.done).length;
   const goBack = () => onBack();
@@ -163,7 +179,7 @@ export function PersonalGuidePage({ corpus: suppliedCorpus }) {
   const openGuide = (guideId, confirmed = false) => { const params = new URLSearchParams(location.search); params.set('view', 'guides'); if (guideId) params.set('guide', guideId); else params.delete('guide'); if (!navigation.current?.push(`${location.pathname}?${params}`, { confirmed })) return; window.scrollTo({ top: 0, behavior: 'instant' }); requestAnimationFrame(() => document.querySelector('.personal-editor-title h1')?.focus({ preventScroll: true })); };
   const changed = guide => { if (!isCurrentGuideOwner(userIdRef.current, userId)) return; setData(value => value && isCurrentGuideOwner(userIdRef.current, userId) ? ({ ...value, guides: [guide, ...value.guides.filter(item => item.id !== guide.id)], remaining: Math.max(0, value.limit - (value.guides.some(item => item.id === guide.id) ? value.guides.length : value.guides.length + 1)) }) : value); };
   const created = guide => { if (!isCurrentGuideOwner(userIdRef.current, userId)) return; changed(guide); openGuide(guide.id, true); };
-  const deleted = guideId => { if (!isCurrentGuideOwner(userIdRef.current, userId)) return; setData(value => value && isCurrentGuideOwner(userIdRef.current, userId) ? ({ ...value, guides: value.guides.filter(item => item.id !== guideId), remaining: value.remaining + 1 }) : value); openGuide('', true); };
+  const deleted = guideId => { if (!isCurrentGuideOwner(userIdRef.current, userId)) return; setData(value => { if (!value || !isCurrentGuideOwner(userIdRef.current, userId)) return value; const guides = value.guides.filter(item => item.id !== guideId); return { ...value, guides, remaining: Math.max(0, value.limit - guides.length) }; }); openGuide('', true); };
   const profileSaved = value => { if (isCurrentGuideOwner(userIdRef.current, userId)) setProfile(current => isCurrentGuideOwner(userIdRef.current, userId) ? value : current); };
   const guides = ownedData?.guides || [], active = guides.find(guide => guide.id === selected), topics = [...new Set(guides.map(guide => guide.topic || '生活'))], found = useMemo(() => guides.filter(guide => (!topic || (guide.topic || '生活') === topic) && `${guide.title} ${guide.content} ${guide.topic}`.toLowerCase().includes(query.trim().toLowerCase())), [guides, topic, query]);
   const completed = guides.reduce((n, guide) => n + guide.tasks.filter(task => task.done).length, 0), tasks = guides.reduce((n, guide) => n + guide.tasks.length, 0);

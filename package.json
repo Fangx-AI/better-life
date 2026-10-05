@@ -20,7 +20,7 @@
     "db:restore-new": "node --env-file-if-exists=.env.local scripts/membership-backup.mjs restore",
     "export:obsidian": "node scripts/obsidian.mjs",
     "check:qa-live": "node --env-file-if-exists=.env.local scripts/qa-live-check.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test --test-concurrency=4 tests/*.test.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "check": "npm run build && npm test && node library/tools/check-plain.mjs && node library/tools/check-refs.mjs --check",
     "check:qa-conversation-live": "node --env-file-if-exists=.env.local scripts/qa-conversation-live-check.mjs"

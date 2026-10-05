@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('../src/components/membership/account-settings.jsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../src/components/membership/account-settings.css', import.meta.url), 'utf8');
+const dialog = readFileSync(new URL('../src/components/membership/account-dialog.jsx', import.meta.url), 'utf8');
 
 test('account settings UI: existing Aceternity controls and same-origin membership API only, no fake auth/backend or credential storage', () => {
   assert.match(source, /NavbarButton.*ui\/resizable-navbar/); assert.match(source, /Input.*ui\/input/); assert.match(source, /Label.*ui\/label/); assert.match(source, /useMembership.*membership-context/);
@@ -20,6 +21,20 @@ test('account settings UI: paid orders remain selectable when refunds are closed
   assert.match(source, /!refundAvailable && <p/); assert.match(source, /paidOrders.length > 0 \? <form/); assert.doesNotMatch(source, /refundAvailable && paidOrders.length/);
   for (const text of ['退款申请暂未开放', '选择已支付订单', '申请已登记', '已批准，尚非到账', '待支付平台核验', '已核验退款', '不等于退款到账', '不会自动调用退款网关']) assert.ok(source.includes(text), text);
   assert.match(source, /hasOpenRequest/); assert.match(source, /ticket.userId === userId/); assert.match(source, /Object.hasOwn\(reasons, reason\)/); assert.doesNotMatch(source, /<textarea|amountFen:|userId:|gatewayCalled: true/);
+});
+
+test('account settings UI: independently paginates paid history rather than treating the recent summary as all refundable orders', () => {
+  assert.match(source, /membershipRequest\('orders\?status=paid&limit=20', \{ signal: abort.signal \}\)/);
+  assert.match(source, /orders\?status=paid&limit=20&cursor=\$\{encodeURIComponent\(cursor\)\}/);
+  assert.match(source, /validateOrderHistory\(data, userId, \{ status: 'paid' \}\)/);
+  assert.match(source, /stateOwner === userId \? orderItems.filter/);
+  assert.doesNotMatch(source, /const paidOrders = \(me\?\.orders/);
+  assert.match(source, /ordersLock.current/); assert.match(source, /orderController.current\?\.abort\(\)/); assert.match(source, /owner.current !== userId/);
+  assert.match(source, /ordersLoaded && !ordersLoading && !ordersError/);
+  for (const text of ['加载更早的已支付订单', '正在读取已支付订单', '重新读取订单']) assert.ok(source.includes(text));
+  assert.match(dialog, /LinkedIdentities key=\{`identities:\$\{me.user.id\}`\}/);
+  assert.match(dialog, /AccountSettings key=\{`settings:\$\{me.user.id\}`\}/);
+  assert.doesNotMatch(dialog, /(?:LinkedIdentities|AccountSettings) key=\{me.user.id\}/);
 });
 
 test('account settings UI: deletion is initially collapsed, loads only on open, aborts, and is forbidden for demo accounts', () => {
@@ -44,7 +59,7 @@ test('account settings UI: support link is configured HTTPS only and privacy/ter
 });
 
 test('account settings UI: scoped mobile CSS, 16px fields, visible loading/errors and native modal focus targets', () => {
-  assert.match(source, /role="status"/); assert.match(source, /role="alert"/); assert.match(source, /aria-busy=\{refundLoading \|\| refundBusy\}/); assert.match(source, /aria-busy=\{statusLoading \|\| deleteBusy\}/); assert.match(source, /aria-describedby=/);
+  assert.match(source, /role="status"/); assert.match(source, /role="alert"/); assert.match(source, /aria-busy=\{refundLoading \|\| refundBusy \|\| ordersLoading\}/); assert.match(source, /aria-busy=\{statusLoading \|\| deleteBusy\}/); assert.match(source, /aria-describedby=/);
   assert.match(css, /\.account-settings \*\{box-sizing:border-box;min-width:0\}/); assert.match(css, /font-size:16px/); assert.match(css, /max-width:100%/); assert.match(css, /grid-template-columns:minmax\(0,1fr\)/); assert.match(css, /overflow-wrap:anywhere/); assert.match(css, /@media\(max-width:767px\)/); assert.match(css, /prefers-reduced-motion:reduce/);
   assert.doesNotMatch(source, /<table|<iframe|<h1|<h2/);
   for (const selector of css.split('}').flatMap(rule => rule.split('{').slice(0, -1)).filter(value => value.trim() && !value.includes('@media'))) assert.ok(selector.includes('.account-settings'), selector);

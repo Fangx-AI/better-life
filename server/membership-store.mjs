@@ -72,6 +72,8 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   if (!orderColumns.has('refund_state_at')) db.exec('ALTER TABLE orders ADD COLUMN refund_state_at INTEGER NOT NULL DEFAULT 0');
   for (const row of db.prepare('SELECT id FROM orders WHERE provider_order_id IS NULL').all()) db.prepare('UPDATE orders SET provider_order_id=? WHERE id=?').run(paymentOrderId(row.id), row.id);
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS provider_order_unique ON orders(provider_order_id)');
+  db.exec('CREATE INDEX IF NOT EXISTS order_user_history ON orders(user_id,created_at DESC,id DESC)');
+  db.exec('CREATE INDEX IF NOT EXISTS order_user_status_history ON orders(user_id,status,created_at DESC,id DESC)');
   const codeColumns = new Set(db.prepare('PRAGMA table_info(codes)').all().map(column => column.name));
   if (!codeColumns.has('channel')) db.exec("ALTER TABLE codes ADD COLUMN channel TEXT NOT NULL DEFAULT 'email'");
   if (!codeColumns.has('purpose')) db.exec("ALTER TABLE codes ADD COLUMN purpose TEXT NOT NULL DEFAULT 'login'");
@@ -191,6 +193,20 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
     return get('SELECT * FROM quota_periods WHERE id=?', id);
   }
   const orderView = row => ({ id: row.id, planId: row.plan_id, planName: row.plan_name, amountFen: row.amount_fen, currency: row.currency, status: row.status, refundState: row.refund_state, createdAt: iso(row.created_at), paidAt: iso(row.paid_at), refundedAt: iso(row.refunded_at), expiresAt: iso(row.expires_at), checkoutUrl: row.status === 'pending' && row.expires_at > now() ? row.checkout_url : null });
+  function orderHistory(user, { status = 'all', limit = 20, cursor = null } = {}) {
+    assertUserActive(user);
+    if (!['all', 'paid'].includes(status) || !Number.isSafeInteger(limit) || limit < 1 || limit > 50 || cursor !== null && (typeof cursor !== 'string' || !/^[A-Za-z0-9_-]{8,128}$/.test(cursor))) fail(400, 'invalid_order_history', '订单列表参数无效，请刷新后重试。');
+    // 游标只接受本人已有的订单 ID；时间和账号不由客户端决定。
+    // 本接口只读本地已核验状态，不查支付网关、不修改订单或额度。
+    const anchor = cursor === null ? null : get('SELECT id,created_at,status FROM orders WHERE id=? AND user_id=?', cursor, user.id);
+    if (cursor !== null && (!anchor || status === 'paid' && anchor.status !== 'paid')) fail(400, 'invalid_order_cursor', '订单列表已变化，请刷新后重试。');
+    const conditions = ['user_id=?'], parameters = [user.id];
+    if (status === 'paid') conditions.push("status='paid'");
+    if (anchor) { conditions.push('(created_at<? OR (created_at=? AND id<?))'); parameters.push(anchor.created_at, anchor.created_at, anchor.id); }
+    const rows = all(`SELECT * FROM orders WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC,id DESC LIMIT ?`, ...parameters, limit + 1);
+    const hasMore = rows.length > limit, items = rows.slice(0, limit);
+    return { ownerId: user.id, items: items.map(orderView), nextCursor: hasMore ? items.at(-1).id : null };
+  }
   function me(user) {
     if (!user) return { user: null, membership: { planId: 'free', name: '免费使用', expiresAt: null }, quota: { limit: 0, used: 0, remaining: 0, resetsAt: null }, orders: [] };
     const entitlement = active(user), plan = membershipPlan(entitlement?.plan_id ?? 'free'), quota = period(user);
@@ -342,7 +358,7 @@ export function createMembershipStore({ filename = ':memory:', now = Date.now } 
   const assertPaymentMerchant = merchantId => {
     if (get('SELECT id FROM orders WHERE merchant_id IS NULL OR merchant_id<>? LIMIT 1', merchantId)) fail(503, 'payment_merchant_mismatch', '数据库含未绑定或其他商户的历史订单，需保留原通道并人工核对，不自动迁移支付归属。');
   };
-  return { db, close: () => db.close(), cleanup, issueCode, verifyCode, identityOwner, linkAllowed, sessionUser, localDemoUser, me, reserve, finish, orderView, createOrder, ownedOrder, confirmPaid, acceptPaymentEvent, assertPaymentMerchant, saveAnswer,
+  return { db, close: () => db.close(), cleanup, issueCode, verifyCode, identityOwner, linkAllowed, sessionUser, localDemoUser, me, reserve, finish, orderView, orderHistory, createOrder, ownedOrder, confirmPaid, acceptPaymentEvent, assertPaymentMerchant, saveAnswer,
     throttle: (key, max, windowMs) => tx(() => rate(key, max, windowMs)),
     revokeSession: tokenHash => run('DELETE FROM sessions WHERE token_hash=?', tokenHash),
     cancelCode: (identity, digest) => run('DELETE FROM codes WHERE email=? AND digest=?', codeKey(identity), digest),

@@ -46,7 +46,7 @@
 /usr/bin/node --env-file=/etc/better-life/production.env scripts/operations-health.mjs
 ```
 
-本轮未执行该命令到真实主站、未安装定时任务；测试只使用 mock GET 和临时目录。
+该命令尚未对真实主站执行。专用 health service/timer 已安装并校验，但域名/主站尚未激活，timer 仍 inactive。模型预算巡检与安全通知队列现由 [OPERATIONS-MONITOR.md](./OPERATIONS-MONITOR.md) 和 [OPERATIONS-ALERTS.md](./OPERATIONS-ALERTS.md) 说明；通知接收端未配置，不宣称负责人收件。
 
 巡检只做：
 
@@ -69,17 +69,17 @@
 | `DISK_SPACE_LOW` | 临时停新单/模型，保留收费及恢复证据；先确认副本与保留策略再处理旧文件 |
 | `PRIVATE_DATABASE_METADATA_UNAVAILABLE / BACKUP_DIRECTORY_UNAVAILABLE` | 核对独立目录权限、挂载和链接，不能随意 mkdir 到别的应用目录 |
 
-部署后可以将此命令接入**独立 Better Life** 的外部监控 / systemd 单元；先确认失败退出码能送达负责人，再建立巡检频率和升级机制。本仓库没有自动安装，也没有在本机后台监控。日志仅记状态码、有限告警码、时间及发布版本，不开启问题/答案、OTP、完整请求、authorization、支付密钥日志。其他服务健康信息由其自身运维记录提供，不能从本项目巡检宣称原站无影响。
+部署后将此命令接入**独立 Better Life** 的专用巡检单元；先确认失败通知能送达负责人，再启用频率与升级机制。源码工具不会自行安装；授权维护已手动安装 health 单元但未启用 timer，Windows 离机任务另有实际安装记录。日志仅记状态码、有限告警码、时间及发布版本，不开启问题/答案、OTP、完整请求、authorization、支付密钥日志。其他服务健康信息由其自身运维记录提供，不能从本项目巡检宣称原站无影响。
 
 ## 3. 已实现的备份与实际缺口
 
 既有 `membership-backup.mjs` 已实现 Online Backup 一致 WAL 快照、独立 AES-GCM 全库加密、临时文件清理、品牌 / 完整性 / 外键 / 私文解密校验、不覆盖原库的恢复到新文件。预算、运营审计与工单表同在会员数据库，会被全库快照包含。
 
-`deploy/better-life-backup.service` 与 `.timer` 只是模板。当前并未证明以下事项已完成：
+`deploy/better-life-backup.service` 与 `.timer` 已手动安装到独立 Better Life 目录。2026-10-05 北京时间 03:00:18 自动备份成功，04:00 本机隐藏任务自动拉取成功；最新密文、配对 DPAPI 托管与隔离空库恢复均有实际记录。详细证据见 [PRODUCTION-RELEASE.md](./PRODUCTION-RELEASE.md) / [OFFSITE-BACKUP.md](./OFFSITE-BACKUP.md)。当前仍未证明以下事项：
 
-- 服务用户 / 独立目录权限已在生产 Linux 验收；timer 已安装启用、主机重启后仍执行。
-- 最近一次**真实生产**备份与恢复校验成功；主机磁盘余量 / 加密 key / 原 AUTH_SECRET 可用。
-- 加密备份已复制到离机介质并可取回；离机上传失败能告警。凭本机文件存在不能判断该项成功。
+- 整机重启后的定时执行、真实用户私文及金融流水全流程恢复；当前已验证的是独立空库，不是真实用户库。
+- 服务器/Windows 同时损失时的独立密钥恢复与长期云端离机保障；当前 DPAPI 绑定当前 Windows 用户环境，PC 必须登录且在线。
+- 离机拉取失败、backup oneshot 失败及过期告警实际送达负责人；通知 URL 未配置，当前明确 pending/未发送。
 - 日 7 / 周 4 / 月 3 保留策略执行、容量评估与安全删除已经安排；脚本不会自动删除旧备份。
 - 独立备份 key 和每个仍需要的旧 AUTH_SECRET 已分别离线保管、恢复负责人可用；只有 DB 不足以恢复私文。
 - 全流程停机恢复、登录、已付订单 / 退款 / 权益、日/月成本账本和私人档案经授权抽验；RPO/RTO 已由真实演练测量。
@@ -96,11 +96,11 @@
 5. 启动后验收健康、两种身份登录同一账号、已付会员 / 已退权益、私人指南归属与保存；重新手动 create + check，再恢复新单和模型。
 6. 代码回滚只切换 Better Life release；**不把恢复旧数据库当日常代码回滚**，否则会丢失已付款事实。迁移需加表/加列兼容，并先备份校验。
 
-本轮本地验证：`node --test tests/usage-budget.test.mjs tests/operations-health.test.mjs`，全部使用临时文件或模拟网络；没有真实送码、扣款、退款、模型调用、生产备份/恢复和线上部署。
+成本、健康、告警和发布工具的自动化采用合成数据/临时文件或模拟网络。后续独立服务器加密备份、离机拉取与空库恢复已另行实际执行，见发布记录；没有真实送码、扣款、退款或正式主站上线。本页旧定向测试不能替代最新完整检查或真实外部验收。
 
 ## 5. 第一阶段离线发布包与 dry-stage（不是上线）
 
-新增 `scripts/release-manifest.mjs` 与 `deploy/install-release.sh`。**只实现源码包完整性与独立目录暂存，不实现生产激活 / 候选启动 / 原子 current 切换 / Nginx 配置或回滚。** `--activate` 会拒绝执行。不能因为 dry-stage 成功就说网站上线，也不能标记正式运营 Goal 完成。
+`scripts/release-manifest.mjs` 与 `deploy/install-release.sh` 只负责源码包完整性与独立目录暂存，shell 入口的 `--activate` 仍会拒绝执行。完整候选构建、发布、回滚和中断恢复现已由另一个受控工具实现，见 [RELEASE-ACTIVATION.md](./RELEASE-ACTIVATION.md)，但尚未真实公网激活。不能因为 dry-stage 成功就说网站上线，也不能标记正式运营 Goal 完成。
 
 ### 源码发布包
 
@@ -135,13 +135,13 @@ bash /absolute/reviewed/better-life/deploy/install-release.sh --dry-stage /absol
 
 本地验证仅覆盖 Node 临时目录与脚本静态安全断言；Windows 测试**不代替 Linux bash / 文件权限 / systemd / Nginx 验收**。部署方后续可在授权的独立临时 Linux 目录做源码验证与构建测试，但不应因此放到公网。
 
-### 完整原子激活尚待实现 / 真实验收的闸门
+### 正式激活仍需真实验收的闸门
 
 - 独立、已授权的真实域名；拒绝 example/测试域名真实发布。证书 SAN 覆盖此域名、证书有效期与私钥权限通过检查，不能借用只覆盖其他站点的证书。当前 dry-stage **没有进行证书/域名检查**。
 - 专用生产 env 的全部启动配置与真实 OTP / 模型 / 本项目商户验收；不得复制原站 env，不得自动打开新单。
 - 在另一个构建工作副本安装锁定依赖，`PUBLIC_BASE_PATH=/` 的生产 build + tests + 原书校验完整通过；不自动 npm audit 修复或升级依赖。源码包哈希在构建前校验；构建会生成 dist/output/node_modules 并更新派生 public 文件，因此构建后不能把原源码 manifest 的严格校验当作构建产物证明，须另存明确的产物验收记录。
 - 生产 preflight 以 `better-life` 用户成功；独立持久数据/备份目录、权限、商户绑定、成本预算和恢复已核对。
-- 仅 `127.0.0.1:4178` 的端口占用属于本项目；禁止抢占别的服务。候选回环 health 达标后才允许切换 current；只有 `better-life.service` 可受控停止/启动。单实例切换及故障回滚需要处理同端口冲突、数据库兼容及本项目候选清理，当前模板没有实现。
+- 仅 `127.0.0.1:4178` 的端口占用属于本项目；禁止抢占别的服务。候选回环 health 达标后才允许切换 current；只有 `better-life.service` 可受控停止/启动。新激活工具已实现单实例受控切换/代码回滚/候选保守清理，仍须在真实已授权域名/TLS环境验证；本节 dry-stage 模板不会调用这些操作。
 - 只创建新的本项目独立 Nginx vhost 文件，不覆盖已有 server/upstream；`nginx -t` 通过后单次 reload，既有站点继续保留。当前模板没有执行 Nginx 变更或 reload。
 - 实际失败回滚、健康、TLS、公网登录、计量、已付回调与原站健康验收后才确认发布；没有实际支付权限/商户事实时保持新单关闭。
 
