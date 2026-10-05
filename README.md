@@ -73,16 +73,6 @@ Obsidian 版带章节目录、条目双链、来源笔记和分色关系图。�
 
 PDF、EPUB、离线 HTML 来自原作者发布页，可能比本站的内容快照更新。
 
-## 发给朋友，不必让他读完整本
-
-三份一页清单，按需要保存、打印或转发：
-
-**[租房押金](https://fangx-ai.github.io/better-life/share-kit/rent-deposit.html)** · **[离职准备](https://fangx-ai.github.io/better-life/share-kit/leaving-job.html)** · **[下单前停一下](https://fangx-ai.github.io/better-life/share-kit/spending-pause.html)**
-
-觉得好用，留一颗 Star；遇到正在需要的人，把对应场景发给他。
-
 ---
 
-原作：[eternity4719《高性价比人生指南》](https://github.com/eternity4719/HowToLiveBetter) · 正文 [CC BY 4.0](LICENSE-CONTENT) · 代码 [MIT](LICENSE)
-
-非官方阅读版，原书正文快照未改写。[来源与版本](docs/SOURCES.md) · [开发说明](docs/DEVELOPMENT.md) · [反馈问题](https://github.com/Fangx-AI/better-life/issues/new/choose)
+非官方阅读版，原书正文快照未改写。[来源与许可](docs/SOURCES.md) · [开发说明](docs/DEVELOPMENT.md) · [反馈问题](https://github.com/Fangx-AI/better-life/issues/new/choose)
