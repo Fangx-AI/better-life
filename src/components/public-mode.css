@@ -1,0 +1,7 @@
+/* The public-only entry keeps the selected homepage's white/coral input shape. */
+.public-question .public-question-bar{display:flex;align-items:center;gap:18px;max-width:920px;min-height:78px;margin:0 auto;border:1px solid #e8e8eb;border-radius:999px;padding:8px 8px 8px 28px;background:#fff;box-shadow:0 12px 35px #27333f0a;color:#7b8591}
+.public-question .public-question-bar>svg{flex-shrink:0;color:#4d5965}
+.public-question .public-question-bar>p{flex:1;margin:0;text-align:left;min-width:0;font-size:20px;line-height:1.6}
+.public-question .public-question-bar .button{min-height:60px;min-width:158px;flex-shrink:0;border-radius:999px;padding:16px 26px;display:inline-flex;justify-content:center;align-items:center;gap:12px;font-size:17px}
+@media(max-width:767px){.public-question .public-question-bar{min-height:66px;gap:10px;padding-left:18px}.public-question .public-question-bar>p{font-size:15px}.public-question .public-question-bar .button{min-height:48px;min-width:100px;padding:11px 14px;font-size:14px;gap:6px}.public-question .public-question-bar>svg{width:20px;height:20px}}
+@media(max-width:359px){.public-question .public-question-bar{gap:7px;padding-left:13px}.public-question .public-question-bar>p{font-size:13px}.public-question .public-question-bar .button{min-width:88px;font-size:13px;padding:11px 12px}.public-question .public-question-bar .button>svg{width:15px;height:15px}}

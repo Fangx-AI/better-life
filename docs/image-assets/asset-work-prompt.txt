@@ -1,0 +1,10 @@
+Use case: photorealistic-natural.
+Asset type: independent background photograph for the work-and-career scene tile of a Chinese life guide website.
+Input image role: attached website image is composition and style reference ONLY; derive ONLY the photograph in the left scene tile, never reproduce the webpage, UI, or text.
+Primary request: warm wooden desk with a partly cropped open laptop on the left, a ceramic coffee cup on the upper right, and an open blank spiral notebook toward the right. The scene must be believable high-end editorial lifestyle photography.
+Composition: horizontal approximately 2:1 aspect ratio, output at least 1245x624 pixels, preferably 1536x768. View from slightly above the desk at an oblique angle. Laptop is dark and sits left/top; coffee on right/top; notebook on right/lower. Preserve comparatively uncluttered darker wood across the central/lower left for later editable UI title overlay. No title baked into the image.
+Lighting: warm natural sunlight, subtle shadows, tactile oak grain, realistic ceramic and paper textures, photographic clarity, polished but not sterile.
+Constraints: no words, letters, handwriting, screen text, numbers, logos, icons, watermarks, people, UI elements, webpage frame, or rounded image corners. Only one scene photograph filling the entire rectangular canvas. The notebook pages must be blank.
+
+Generation mode: built-in image_gen.
+Final asset: C:\Users\PC\Documents\Codex\2026-10-03\new-chat\outputs\better-life\public\media\scene-work.png

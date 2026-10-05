@@ -1,0 +1,14 @@
+# Template only. Enable after the own HTTPS app and notification owner are ready.
+# This does not schedule or probe an unactivated production site by itself.
+[Unit]
+Description=Better Life five-minute health and budget check
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+RandomizedDelaySec=15
+AccuracySec=15
+Unit=better-life-health.service
+
+[Install]
+WantedBy=timers.target

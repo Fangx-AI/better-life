@@ -1,84 +1,27 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>高性价比人生指南 · Better Life — 省钱、避坑、少走弯路</title>
-  <meta name="description" content="学校没教，生活会考。把高性价比人生指南变成随手能用的工具箱：按场景找答案、全文检索、收藏建议、下载 PDF。省钱、工作、租房、家庭与健康，遇到事先查一查。">
-  <meta name="theme-color" content="#171a17">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="高性价比人生指南 · Better Life">
-  <meta property="og:description" content="不用从头读完。遇到事，找到现在用得上的那一条。">
-  <meta property="og:url" content="https://fangx-ai.github.io/better-life/">
-  <meta property="og:image" content="https://fangx-ai.github.io/better-life/assets/cover-v2.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://fangx-ai.github.io/better-life/">
-  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/style.css">
-  <script type="module" src="assets/app.mjs"></script>
+  <meta name="description" content="学校没教，生活会考。650 条生活建议，34 个主题。按场景查阅、全文检索、本地收藏、免费下载 PDF。遇到事，先查一查。" />
+  <meta name="theme-color" content="#ff4b43" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="高性价比人生指南 · Better Life" />
+  <meta property="og:description" content="省钱、避坑、少走弯路。学校没教，生活会考。" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- better-life:seo:start -->
+  <meta name="robots" content="index,follow" />
+  <meta name="better-life:public-site-url" content="https://fangx-ai.github.io/better-life/" />
+  <meta name="better-life:indexing" content="true" />
+  <meta property="og:url" content="https://fangx-ai.github.io/better-life/" />
+  <meta property="og:image" content="https://fangx-ai.github.io/better-life/media/hero-background.webp" />
+  <link rel="canonical" href="https://fangx-ai.github.io/better-life/" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"高性价比人生指南 · Better Life","url":"https://fangx-ai.github.io/better-life/","inLanguage":"zh-CN"}</script>
+  <!-- better-life:seo:end -->
+  <link rel="icon" href="/media/brand.webp" />
+  <link rel="preload" href="/fonts/display-900.ttf" as="font" type="font/ttf" crossorigin />
+  <script type="module" src="/src/main.jsx"></script>
 </head>
-<body>
-  <a class="skip" href="#library">跳到检索</a>
-  <header class="topbar wrap">
-    <a class="brand" href="./"><img src="assets/icon.svg" width="32" height="32" alt=""><span>BETTER LIFE<small>高性价比人生指南</small></span></a>
-    <nav aria-label="主导航"><a href="#scenes">按场景找</a><a href="#library">查指南</a><a href="https://github.com/Fangx-AI/better-life" class="nav-github">GitHub ↗</a></nav>
-  </header>
-  <main>
-    <section class="hero wrap">
-      <div class="hero-copy">
-        <p class="eyebrow"><span class="dot"></span> 学校没教，生活会考。</p>
-        <h1>高性价比<br><span>人生指南</span></h1>
-        <p class="hero-sub">省钱、避坑、少走弯路。<br>不用读完整本，找到现在用得上的那一条。</p>
-        <div class="actions"><a class="btn primary" href="#library">打开人生工具箱 <span>↗</span></a><a class="btn secondary" href="https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf">下载完整 PDF ↓</a></div>
-        <p class="hero-note">免费查阅 · 不用注册 · 每条保留原始出处</p>
-      </div>
-      <div class="hero-art" aria-label="按场景查阅，不用从头读完">
-        <div class="art-label">THE MANUAL YOU WISH YOU HAD</div>
-        <div class="manual-card card-back"><span>FIELD NOTES / 02</span><b>少花冤枉钱。</b><div class="art-line"></div></div>
-        <div class="manual-card card-front"><span>YOUR LIFE, BETTER EQUIPPED.</span><img src="assets/icon.svg" width="64" height="64" alt=""><b>遇到事，<br>先查一查。</b><div class="card-bottom"><span>人生工具箱</span><span>VOL. 01 ↗</span></div></div>
-        <div class="art-sticker">不用全做。<br>用上一条就算数。</div>
-      </div>
-    </section>
-    <section class="stats wrap" aria-label="内容概况">
-      <div><strong id="stat-entries">—</strong><span>条生活建议</span></div><div><strong id="stat-chapters">—</strong><span>个生活主题</span></div><div><strong>可追溯</strong><span>成本 · 收益 · 出处</span></div><div><strong>零门槛</strong><span>打开即查，无需登录</span></div>
-    </section>
-    <section id="scenes" class="section wrap">
-      <div class="section-heading"><div><p class="eyebrow">START WITH YOUR SITUATION</p><h2>你现在遇到了什么？</h2></div><p>从自己的处境出发，<br>比从第一页开始更有用。</p></div>
-      <div class="scene-grid">
-        <a class="scene" href="?chapter=19#library" data-chapter="19"><span class="scene-num">01 / 工作</span><h3>被裁了，<br>下一步怎么走？</h3><p>离职、补偿、材料与工伤</p><span class="scene-arrow">↗</span></a>
-        <a class="scene" href="?chapter=5#library" data-chapter="5"><span class="scene-num">02 / 金钱</span><h3>钱不多，<br>别再花冤枉钱。</h3><p>消费、保险、预付与防骗</p><span class="scene-arrow">↗</span></a>
-        <a class="scene" href="?chapter=15#library" data-chapter="15"><span class="scene-num">03 / 住处</span><h3>签租房合同前，<br>先看这些。</h3><p>押金、中介、产权与租期</p><span class="scene-arrow">↗</span></a>
-        <a class="scene" href="?chapter=17#library" data-chapter="17"><span class="scene-num">04 / 父母</span><h3>家里有老人，<br>哪些事要提前想？</h3><p>照护、监护、遗嘱与防骗</p><span class="scene-arrow">↗</span></a>
-        <a class="scene" href="?chapter=27#library" data-chapter="27"><span class="scene-num">05 / 家庭</span><h3>准备迎接孩子，<br>先理清要办的事。</h3><p>怀孕、生产、出院与办证</p><span class="scene-arrow">↗</span></a>
-        <a class="scene" href="?chapter=11#library" data-chapter="11"><span class="scene-num">06 / 技术人</span><h3>这份技术外包，<br>到底能不能接？</h3><p>代码、接单、数据与开源</p><span class="scene-arrow">↗</span></a>
-      </div>
-    </section>
-    <section id="library" class="section wrap">
-      <div class="section-heading"><div><p class="eyebrow">LESS SCROLLING, MORE ANSWERS</p><h2>把问题带进来。</h2></div><p>检索原文，不生成答案。<br>可以只看不花钱的建议。</p></div>
-      <form id="search-form" role="search"><label class="sr-only" for="query">搜索指南</label><div class="search-box"><span aria-hidden="true">⌕</span><input id="query" name="q" type="search" placeholder="搜索：离职、押金、医保、睡眠……" autocomplete="off" maxlength="120"><button class="btn primary" type="submit">查一查 ↗</button></div></form>
-      <div class="filters">
-        <label><span class="sr-only">章节</span><select id="chapter"><option value="">全部主题</option></select></label>
-        <label><span class="sr-only">证据等级</span><select id="grade"><option value="">全部证据等级</option><option value="A">A 级证据</option><option value="B">B 级证据</option><option value="C">C 级证据</option></select></label>
-        <label class="check"><input id="free" type="checkbox">只看不花钱</label><label class="check"><input id="saved" type="checkbox">我的收藏</label><button id="clear" class="text-button" type="button">重置</button>
-      </div>
-      <p id="result-status" class="result-status" role="status" aria-live="polite">正在加载指南……</p>
-      <noscript><p>请启用 JavaScript 使用检索，或者<a href="https://github.com/Fangx-AI/better-life/tree/main/library/book">直接阅读 Markdown 正文</a>。</p></noscript>
-      <div id="results" class="results"></div>
-      <button id="more" class="btn secondary load-more" type="button" hidden>再看 12 条 ↓</button>
-      <p class="fine-print">A/B/C 沿用原书的证据分级，不等于确定性或对所有人适用。收藏只保存在当前浏览器；政策与数字请结合条目中的日期和条件阅读。</p>
-    </section>
-    <section class="section wrap formats" id="formats">
-      <div><p class="eyebrow">TAKE IT WITH YOU</p><h2>不只是一个网页。</h2><p>随手查，慢慢读，留作备用。</p></div>
-      <div class="format-list">
-        <a href="https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.pdf"><b>PDF 完整指南</b><span>上游最新版 · 下载阅读 ↗</span></a>
-        <a href="https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.epub"><b>EPUB 电子书</b><span>上游最新版 · 阅读器阅读 ↗</span></a>
-        <a href="https://github.com/eternity4719/HowToLiveBetter/releases/download/epub-latest/HowToLiveBetter.html"><b>离线单文件</b><span>上游最新版 · 无网络也能查 ↗</span></a>
-        <a href="https://github.com/Fangx-AI/better-life/blob/main/library/skills/life-decision-guide/README.md"><b>AI 助手 Skill</b><span>原项目提供 · 查看安装方式 ↗</span></a>
-        <div class="planned"><b>在线问答 / Obsidian</b><span>下一阶段 · 尚未上线</span></div>
-      </div>
-    </section>
-    <section class="wrap star-callout"><div><h2>好用的东西，<br>值得留个入口。</h2><p>收藏网页，或在 GitHub 留一颗 Star，下次需要时更好找。</p></div><a class="btn primary" href="https://github.com/Fangx-AI/better-life">去 GitHub 看项目 ↗</a></section>
-  </main>
-  <footer class="wrap"><a class="brand" href="./">BETTER LIFE</a><p>正文来自 <a href="https://github.com/eternity4719/HowToLiveBetter">eternity4719 / 高性价比人生指南</a>，按 CC BY 4.0 使用。<br>本项目新增场景入口、检索与收藏，未改写正文。快照 <span id="snapshot-date">2026-10-03</span> · 网页内容不会自动跟随上游更新。</p><a href="https://github.com/Fangx-AI/better-life/issues">反馈与建议 ↗</a></footer>
-</body>
+<body><div id="root"></div><noscript>启用 JavaScript 可搜索和收藏，或<a href="https://github.com/Fangx-AI/better-life/tree/main/library/book">直接阅读完整原文</a>。</noscript></body>
 </html>

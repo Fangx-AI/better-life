@@ -1,0 +1,57 @@
+/* Aceternity question / expandable-card adaptations: compact actions and one source list. */
+.qa-panel .qa-heading>button{display:inline-flex;align-items:center;gap:6px;font-weight:400;color:#747b84;min-height:44px;padding:8px}
+.qa-panel .qa-intro{margin:0 0 22px;font-weight:500;color:#303b48}
+.qa-panel .qa-intro>p{margin:0}
+.qa-panel .qa-step{display:flex;gap:12px;margin-top:20px}
+.qa-step-number{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:27px;height:27px;border-radius:50%;background:#fff0e8;color:#db513a;font-size:13px;font-weight:700;margin-top:1px}
+.qa-step-copy{flex:1;min-width:0}
+.qa-panel .qa-step h3{margin:0 0 5px;font-size:17px}
+.qa-step-copy>p,.qa-step-detail>p{font-size:15px;line-height:1.85;color:#56616d;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.qa-panel details>summary{display:flex;align-items:center;list-style:none;cursor:pointer;min-height:44px}
+.qa-panel details>summary::-webkit-details-marker{display:none}
+.qa-panel details>summary:focus-visible{outline:3px solid #ef5b31;outline-offset:4px;border-radius:6px}
+.qa-panel details[open]>summary>svg:last-child{transform:rotate(180deg)}
+.qa-panel .qa-step-detail>summary{gap:7px;font-size:12px;color:#a45a43;width:fit-content;padding:8px 0}
+.qa-step-detail>p{padding-bottom:6px}
+.qa-panel .qa-more-steps{margin-top:20px;border-top:1px solid #f0eae5;padding-top:6px}
+.qa-panel .qa-more-steps>summary{justify-content:space-between;gap:12px;font-size:13px;line-height:1.7;color:#9d5b46;padding:6px 0}
+.qa-panel .qa-sources{padding-top:8px;margin-top:20px}
+.qa-panel .qa-sources>summary{justify-content:space-between;gap:12px;font-size:13px;color:#6b7580;font-weight:500;padding:6px 0}
+.qa-panel .qa-sources>summary>span{display:flex;gap:8px;align-items:center}
+.qa-panel .qa-sources[open]>.entry-list{margin-top:10px}
+.qa-notice{margin-top:18px;color:#8a5f45;font-size:13px;line-height:1.8;overflow-wrap:anywhere}
+.qa-notice>p{margin:0;white-space:pre-wrap}
+.qa-notice-extra{margin-top:3px}
+.qa-notice-extra>summary{display:flex;align-items:center;gap:6px;cursor:pointer;list-style:none;min-height:40px;width:fit-content;font-size:12px}
+.qa-notice-extra>summary::-webkit-details-marker{display:none}
+.qa-notice-extra[open]>summary>svg{transform:rotate(180deg)}
+.qa-notice-extra>summary:focus-visible{outline:3px solid #ef5b31;outline-offset:3px;border-radius:5px}
+.qa-notice-extra>p{margin:0;padding-bottom:4px;white-space:pre-wrap;color:#68717d}
+.qa-conversation .qa-heading h2{display:flex;align-items:center;gap:8px;margin:0;font-size:15px;font-weight:600}
+.qa-conversation-turn+.qa-conversation-turn{border-top:1px solid #eee7e1;margin-top:30px;padding-top:26px}
+.qa-conversation .qa-user-question{margin:18px 0 22px;padding:13px 17px;border-radius:16px 16px 4px 16px;background:#fff0e9;color:#26313d;font-size:17px;line-height:1.7;overflow-wrap:anywhere;white-space:pre-wrap}
+.qa-conversation .qa-progress{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.qa-conversation .qa-progress p{margin:0}
+.qa-followup{margin-top:28px;border-top:1px solid #eee7e1;padding-top:23px}
+.qa-followup>label{font-size:14px;font-weight:600;color:#34404c}
+.qa-followup-controls{display:flex;align-items:center;gap:10px;margin-top:10px}
+.qa-followup-controls>.group\/input{flex:1;min-width:0}
+.qa-followup-controls input{height:48px;background:#faf8f6;border:1px solid #e8dfd7;font-size:15px}
+.qa-followup-controls>button{height:48px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.qa-followup>p{margin:10px 0 0;color:#8a9199;font-size:12px}
+@media(max-width:767px){
+ .qa-panel .qa-heading{font-size:12px;gap:8px}
+ .qa-panel .qa-heading>button{font-size:11px}
+ .qa-panel .qa-answer{padding-left:8px!important}
+ .qa-panel .qa-step{gap:9px;margin-top:18px}
+ .qa-step-number{width:24px;height:24px;font-size:12px}
+ .qa-panel .qa-step h3{font-size:15px}
+ .qa-step-copy>p,.qa-step-detail>p{font-size:14px;line-height:1.85}
+ .qa-panel .qa-intro{font-size:15px;line-height:1.8;margin-bottom:18px}
+ .guide-question .question-examples>button{min-height:44px}
+ .qa-conversation .qa-user-question{font-size:15px;padding:12px 14px}
+ .qa-conversation-turn+.qa-conversation-turn{margin-top:24px;padding-top:20px}
+ .qa-followup-controls{gap:7px}
+ .qa-followup-controls input{font-size:14px}
+ .qa-followup-controls>button{padding-inline:14px;min-width:76px}
+}

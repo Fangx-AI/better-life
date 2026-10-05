@@ -17,15 +17,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm ci
       - run: npm run check
+        env:
+          VITE_PUBLIC_ONLY: 'true'
+          VITE_QA_API_URL: ''
+          VITE_ANALYTICS_ENABLED: 'false'
+          PUBLIC_BASE_PATH: /better-life/
       - uses: actions/configure-pages@v5
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
       - uses: actions/upload-pages-artifact@v4
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with:
-          path: dist
+          path: dist/client
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: check
     runs-on: ubuntu-latest
     permissions:

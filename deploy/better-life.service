@@ -1,0 +1,28 @@
+# 模板，尚未安装。只用于独立better-life账号/目录/端口，不覆盖Image2服务。
+[Unit]
+Description=Better Life same-origin app and membership API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=better-life
+Group=better-life
+WorkingDirectory=/var/www/better-life-current
+EnvironmentFile=/etc/better-life/production.env
+ExecStartPre=/usr/bin/node scripts/production-preflight.mjs
+ExecStart=/usr/bin/node server/app.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/better-life /var/backups/better-life
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

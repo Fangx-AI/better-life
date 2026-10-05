@@ -1,0 +1,31 @@
+# Template only: do not install/enable before the actual own app/domain is ready.
+[Unit]
+Description=Better Life read-only health and model budget monitor
+After=network-online.target
+Wants=network-online.target
+# No OnFailure: monitor sends its own fixed events. Budget blocking or a pending
+# webhook must not become a false HEALTH_UNAVAILABLE via a second failure unit.
+# A crash before the script starts cannot queue an in-app alert; use separately
+# approved external availability monitoring. Never add recursive alert OnFailure.
+
+[Service]
+Type=oneshot
+User=better-life
+Group=better-life
+WorkingDirectory=/var/www/better-life-current
+# Minimal origin/storage/budget settings only, not production.env or backup keys.
+EnvironmentFile=/etc/better-life/monitor.env
+EnvironmentFile=-/etc/better-life/alerts.env
+ExecStart=/usr/bin/node scripts/operations-monitor.mjs
+TimeoutStartSec=60
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+# Membership DB and backup paths remain read-only, including WAL/SHM.
+# Prepare this exact private state directory before starting the unit.
+ReadWritePaths=/var/lib/better-life/alerts
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true

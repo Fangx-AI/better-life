@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "status": "prepared-not-published",
+  "createdAt": "2026-10-05",
+  "publicSiteUrl": "https://fangx-ai.github.io/better-life/",
+  "counts": {
+    "entries": 650,
+    "themes": 34
+  },
+  "attribution": {
+    "title": "高性价比人生指南",
+    "author": "eternity4719",
+    "repository": "https://github.com/eternity4719/HowToLiveBetter",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "snapshotDate": "2026-10-03",
+    "revision": "fcc93eb9a4bdc26e8a4e4c94bdaae0a89265927b",
+    "changes": "Better Life 对公开原书条目摘编、缩写和重排，新增场景标题与分享版式；原书正文未修改。",
+    "unofficial": true
+  },
+  "cards": [
+    {
+      "id": "rent-deposit",
+      "file": "rent-deposit.html",
+      "topic": "租房押金",
+      "sourceIds": [
+        "15-1",
+        "15-3",
+        "15-6"
+      ],
+      "chapter": 15,
+      "title": "押金怎么退，签字前说清。",
+      "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=15",
+      "sources": [
+        {
+          "id": "15-1",
+          "chapter": 15,
+          "number": 1,
+          "chapterTitle": "租房与买房",
+          "title": "押金的数额、退还时间和扣减情形，必须写进合同",
+          "originalSources": "国务院 (2025). 住房租赁条例（国令第 812 号，2025 年 9 月 15 日施行）（第十条）. <https://www.gov.cn/zhengce/zhengceku/202507/content_7032956.htm>",
+          "originalConditions": "退租那天和房东一起拍照录像。水表、电表、燃气表的读数都拍下来，墙面和地面也拍。押金被无故扣了，先找房屋租赁管理部门投诉。金额不大的走小额诉讼，见第 8 节",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=15#entry-15-1"
+        },
+        {
+          "id": "15-3",
+          "chapter": 15,
+          "number": 3,
+          "chapterTitle": "租房与买房",
+          "title": "中介不得代收代付租金和押金，钱直接给房东",
+          "originalSources": "国务院 (2025). 住房租赁条例（国令第 812 号，2025 年 9 月 15 日施行）（第二十五条）. <https://www.gov.cn/zhengce/zhengceku/202507/content_7032956.htm>",
+          "originalConditions": "付款前核对收款人是不是产权证上的名字。不是本人的，问清楚，并留一份书面授权。中介只能收牵线撮合的居间服务费",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=15#entry-15-3"
+        },
+        {
+          "id": "15-6",
+          "chapter": 15,
+          "number": 6,
+          "chapterTitle": "租房与买房",
+          "title": "签约前核对产权证和抵押情况，所有款项走转账并备注用途",
+          "originalSources": "作者经验，无直接文献；证据留存与转账备注同理见第 8 节关于彩礼和借条的两条",
+          "originalConditions": "产权信息可以去当地不动产登记中心查。签约时让房东本人到场，本人来不了的，要一份授权委托书。二房东转租给你的，要有原房东的书面同意",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=15#entry-15-6"
+        }
+      ]
+    },
+    {
+      "id": "leaving-job",
+      "file": "leaving-job.html",
+      "topic": "离职准备",
+      "sourceIds": [
+        "19-8",
+        "19-17",
+        "19-7"
+      ],
+      "chapter": 19,
+      "title": "工作可以换，材料先留好。",
+      "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=19",
+      "sources": [
+        {
+          "id": "19-8",
+          "chapter": 19,
+          "number": 8,
+          "chapterTitle": "在职、离职和工伤",
+          "title": "离职前把工资条、考勤、劳动合同、社保记录和聊天记录先存下来",
+          "originalSources": "作者经验，无直接文献；维权路径见第 7 节",
+          "originalConditions": "存的是自己的劳动关系材料。不要顺手带走公司的源码、客户名单和技术文档，带走的风险见第 11 节。走的时候还要找单位要离职证明，见本节第 17 条（离职证明）",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=19#entry-19-8"
+        },
+        {
+          "id": "19-17",
+          "chapter": 19,
+          "number": 17,
+          "chapterTitle": "在职、离职和工伤",
+          "title": "离职时找单位要一份离职证明，写明合同期限、离职日期、岗位和工作年限",
+          "originalSources": "全国人大常委会 (2012 修正). 劳动合同法（第五十、八十九、九十一条）. <https://flk.npc.gov.cn/detail?id=2c909fdd678bf17901678bf74d7106b3>；国务院 (2008). 劳动合同法实施条例（国务院令第 535 号，第二十四条）. <https://flk.npc.gov.cn/detail?id=ff8080816f3cbb3c016f40927caf049c>；国务院 (1999). 失业保险条例（国务院令第 258 号，第十六条）. <https://xzfg.moj.gov.cn/front/law/detail?LawID=517>；全国人大常委会 (2007). 劳动争议调解仲裁法（第二、二十七、四十三、五十三条）. <https://flk.npc.gov.cn/detail?id=2c909fdd678bf17901678bf64f28039d>；国务院 (2004). 劳动保障监察条例（国务院令第 423 号，第十七条）. <https://www.gov.cn/gongbao/content/2004/content_63042.htm>；国务院 (2006). 诉讼费用交纳办法（国务院令第 481 号，第六、十三、二十九条）. <https://www.gov.cn/ziliao/flfg/2006-12/29/content_483682.htm>",
+          "originalConditions": "法条没有把出证明和工作交接挂在一起，交接办完才付的是经济补偿。单位拖着不给，先发书面消息再要一次。再不给，就打 12333 或者去人社局劳动监察投诉。投诉不收费，立案后 60 个工作日内查完，复杂的可以再延 30 个工作日。要单位赔损失的，走劳动仲裁，也不收费，要在 1 年内申请。仲裁受理后 45 日内结案，最多再延 15 日。损失要你自己拿证据证明，比如因为没有证明耽误了失业登记、被新单位拒收。不服裁决再去法院，一审普通程序 6 个月起。法院收的劳动争议受理费每件 10 元，律师费不在诉讼费用里，要自己出。条例要求写的四样里没有离职原因。证明上写了「个人原因主动辞职」而事实不是这样，当场提出来，理由见本节第 7 条（别签主动辞职）。失业保险金怎么领，见第 7 节第 1 条（失业保险金）。",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=19#entry-19-17"
+        },
+        {
+          "id": "19-7",
+          "chapter": 19,
+          "number": 7,
+          "chapterTitle": "在职、离职和工伤",
+          "title": "不要签「个人原因主动辞职」，那一签就没有 N 了",
+          "originalSources": "全国人大常委会 (2007). 中华人民共和国劳动合同法（2008 年 1 月 1 日施行）（第三十八条、第四十六条）. <http://www.gov.cn/gongbao/content/2007/content_711013.htm>",
+          "originalConditions": "公司常用的话术是「先签了好走流程，补偿另外给」。要就当场写进协议，不写就不签。当天不签不会有任何法律后果，冷静一晚再说",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=19#entry-19-7"
+        }
+      ]
+    },
+    {
+      "id": "spending-pause",
+      "file": "spending-pause.html",
+      "topic": "省钱反冲动",
+      "sourceIds": [
+        "5-23",
+        "5-24",
+        "5-1"
+      ],
+      "chapter": 5,
+      "title": "先别下单，明天再决定。",
+      "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=5",
+      "sources": [
+        {
+          "id": "5-23",
+          "chapter": 5,
+          "number": 23,
+          "chapterTitle": "不要浪费钱",
+          "title": "大额非必需购买设 24 小时冷静期，网购善用七日无理由退货",
+          "originalSources": "国家市场监督管理总局 (2020 修订). 网络购买商品七日无理由退货暂行办法（总局令第 31 号）. <https://www.gov.cn/zhengce/zhengceku/2020-11/03/content_5557118.htm>",
+          "originalConditions": "「冷静期」本身是经验做法，没有直接的文献支持。冷静期没拦住的，还有七日无理由退货这条制度可用。退货之前先确认两件事：这件商品在不在不能退的清单里，包装还完不完好。",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=5#entry-5-23"
+        },
+        {
+          "id": "5-24",
+          "chapter": 5,
+          "number": 24,
+          "chapterTitle": "不要浪费钱",
+          "title": "不为「划线价」和大促囤货",
+          "originalSources": "Tversky A, Kahneman D (1974). Judgment under Uncertainty: Heuristics and Biases. Science 185(4157):1124-1131. <https://doi.org/10.1126/science.185.4157.1124>；国家市场监督管理总局 (2020). 规范促销行为暂行规定（总局令第 32 号，第二十一条）. <https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/fgs/art/2023/art_cae53a080be2401e8f91c6d6291539f8.html>",
+          "originalConditions": "锚定效应是实验室里得出的结论，没有人算过囤货实际亏多少钱。囤货还有几笔你不会记在账上的成本：东西过期，占地方，以及「反正家里有，那就多用点」。只囤这三种都满足的东西：保质期长，确定会用完，单价确实比以前的价格低。",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=5#entry-5-24"
+        },
+        {
+          "id": "5-1",
+          "chapter": 5,
+          "number": 1,
+          "chapterTitle": "不要浪费钱",
+          "title": "关掉所有自动续费，改为到期手动续",
+          "originalSources": "国家市场监督管理总局 (2021, 2025 修正). 网络交易监督管理办法（总局令第 37 号，第十八条）. <https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/fgs/art/2025/art_4b47c79b8d994a42bba4835997688faa.html>",
+          "originalConditions": "你确实经常用的服务，年付一般比月付便宜，留着自动续费反而划算。要关的是你早就忘了、却还在扣钱的那些。",
+          "readingUrl": "https://fangx-ai.github.io/better-life/?view=library&chapter=5#entry-5-1"
+        }
+      ]
+    }
+  ]
+}

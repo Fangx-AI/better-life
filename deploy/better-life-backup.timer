@@ -1,0 +1,12 @@
+# 每天北京时间03:00；首次启用前手动完成一次备份验收，不能据模板宣称已启用。
+[Unit]
+Description=Better Life daily encrypted backup
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 Asia/Shanghai
+Persistent=true
+RandomizedDelaySec=300
+Unit=better-life-backup.service
+
+[Install]
+WantedBy=timers.target

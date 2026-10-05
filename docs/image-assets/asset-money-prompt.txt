@@ -1,0 +1,9 @@
+Use case: photorealistic-natural
+Asset type: standalone raster background for a 415x208 horizontal website scene card
+Primary request: recreate the saving-money photograph mood from the CENTRAL piggy-bank card in the reference image, as a standalone realistic lifestyle magazine photograph. This reference is only composition and visual style guidance, not a webpage edit.
+Scene/backdrop: a warm real wood tabletop, gently blurred green houseplants in the background, bright natural window sunlight.
+Subject: a pale pink ceramic piggy bank positioned on the RIGHT side of the composition, with small stacks of gold-colored coins to its immediate left and nearby on the table.
+Style/medium: premium lifestyle editorial photography, convincing real ceramic glaze and wood grain, shallow depth of field, natural warm colors.
+Composition/framing: horizontal aspect ratio about 2:1, output at least 1245x624 pixels (preferred 1536x768). Piggy bank and gold coins toward the right center, fill only the right two thirds. Keep the lower-left table zone relatively uncluttered and naturally darker for later editable white website text overlay. The whole scene must crop elegantly into 415x208.
+Lighting/mood: sunny warm practical everyday life, soft real shadows, tasteful and welcoming, not exaggerated glossy CGI.
+Constraints: no typography, no words, no labels, no icon, no watermark, no UI, no webpage, no borders. Output only the full-bleed photograph.
