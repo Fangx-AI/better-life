@@ -79,3 +79,12 @@ test('public mode: free content links remain local and homepage metadata does no
   assert.match(metadata.description, /AI 提问暂未开放/); assert.match(metadata.description, /Obsidian/);
   assert.match(routeMetadata({ view: 'home', siteUrl: 'https://service.fixture.test/', publicOnly: false }).description, /直接提问/);
 });
+
+test('public mode: entry detail CTA continues free reading without changing service-mode question copy', () => {
+  const library = read('src/components/library-page.jsx');
+  const cta = library.match(/<div className="library-ask-again">.*<\/NavbarButton><\/div>/)?.[0];
+  assert.ok(cta, 'entry detail CTA exists');
+  assert.match(cta, /PUBLIC_ONLY \? '好建议，继续免费读。' : '想知道怎样用在自己的情况里？'/);
+  assert.match(cta, /PUBLIC_ONLY \? '回到免费首页，按场景找更多建议。' : '回到首页，结合原书直接提问。'/);
+  assert.match(cta, /NavbarButton href=\{base\}[^>]*>\{PUBLIC_ONLY \? '继续阅读' : '去提问'\}/);
+});
